@@ -1,26 +1,83 @@
 ---
 import '../styles/global.css';
-// Component Imports
-import Button from '../components/Button.astro';
+import Header from '../components/streaming/Header.astro';
+import HeroBanner from '../components/streaming/HeroBanner.astro';
+import ContentRow from '../components/streaming/ContentRow.astro';
+import MediaCard from '../components/streaming/MediaCard';
+import { fetchHomeData } from '../../services/FetchAnime';
 
-// Full Astro Component Syntax:
-// https://docs.astro.build/basics/astro-components/
+const { ongoingList, completedList, hero } = await fetchHomeData(import.meta.env.API_SECRET);
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro + TailwindCSS</title>
-	</head>
+<html lang="id" class="streaming-app dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+    <title>StreamHub – Anime Sub Indo</title>
+    <link rel="preconnect" href="https://otakudesu.best" />
+  </head>
 
-	<body>
-		<div class="grid place-items-center h-screen content-center">
-			<Button>Tailwind Button in Astro!</Button>
-			<a href="/markdown-page" class="p-4 underline">Markdown is also supported...</a>
-		</div>
-	</body>
+  <body class="bg-[#0a0a0f] text-zinc-100 antialiased">
+    <Header />
+
+    <main class="pt-16">
+      <HeroBanner
+        title={hero.title}
+        description={hero.description}
+        image={hero.image}
+        type={hero.type}
+        year={hero.year}
+        rating={hero.rating}
+        href={hero.href}
+      />
+
+      <div class="max-w-[1600px] mx-auto -mt-8 relative z-20">
+        <ContentRow title="Ongoing Anime">
+          {ongoingList.map((item) => (
+            <MediaCard
+              title={item.title}
+              image={item.poster}
+              year={item.latestReleaseDate}
+              rating={item.episodes ? `${item.episodes} eps` : ''}
+              type="anime"
+              href={item.href}
+            />
+          ))}
+        </ContentRow>
+
+        <ContentRow title="Completed Anime">
+          {completedList.map((item) => (
+            <MediaCard
+              title={item.title}
+              image={item.poster}
+              year={item.lastReleaseDate}
+              rating={item.score ?? ''}
+              type="anime"
+              href={item.href}
+            />
+          ))}
+        </ContentRow>
+      </div>
+
+      <footer class="border-t border-white/[0.08] mt-20 py-10">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-2 text-white font-bold">
+            <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-sm">S</span>
+            StreamHub
+          </div>
+          <p class="text-zinc-500 text-sm">
+            © 2024 StreamHub. Anime Sub Indo.
+          </p>
+          <div class="flex gap-6 text-sm text-zinc-400">
+            <a href="#" class="hover:text-white transition-colors">Bantuan</a>
+            <a href="#" class="hover:text-white transition-colors">Ketentuan</a>
+            <a href="#" class="hover:text-white transition-colors">Privasi</a>
+          </div>
+        </div>
+      </footer>
+    </main>
+  </body>
 </html>
