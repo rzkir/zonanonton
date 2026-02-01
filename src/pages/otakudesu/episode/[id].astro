@@ -1,21 +1,26 @@
 ---
+import "@/styles/global.css";
+
+import Header from "@/components/streaming/Header.astro";
+
+import { EpisodeDetailPage } from "@/components/streaming/EpisodeDetailPage";
+
+import { fetchEpisodeDetail } from "@/lib/FetchAnime";
+
 export const prerender = false;
 
-import '@/styles/global.css';
-import Header from '@/components/streaming/Header.astro';
-import { fetchEpisodeDetail } from '../../../../services/FetchAnime';
-
 const { id } = Astro.params;
-if (!id) {
-  return Astro.redirect('/');
-}
+const episodeId = id ?? "";
+if (!episodeId) return Astro.redirect("/");
 
-const episode = await fetchEpisodeDetail(id, import.meta.env.API_SECRET);
-if (!episode) {
-  return Astro.redirect('/');
-}
-
-const animeHref = `/otakudesu/anime/${episode.animeId}`;
+const apiBase = import.meta.env.API_BASE ?? import.meta.env.PUBLIC_API_BASE;
+const apiSecret =
+  import.meta.env.API_SECRET ?? import.meta.env.PUBLIC_API_SECRET;
+const initialEpisode = await fetchEpisodeDetail(episodeId, {
+  apiBase,
+  apiSecret,
+});
+const title = initialEpisode?.title ?? "Episode";
 ---
 
 <html lang="id" class="streaming-app dark">
@@ -25,8 +30,8 @@ const animeHref = `/otakudesu/anime/${episode.animeId}`;
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
-    <title>{episode.title} – StreamHub</title>
-    <meta name="description" content={episode.title} />
+    <title>{title} – StreamHub</title>
+    <meta name="description" content={title} />
     <link rel="preconnect" href="https://desustream.info" />
   </head>
 
@@ -34,146 +39,22 @@ const animeHref = `/otakudesu/anime/${episode.animeId}`;
     <Header />
 
     <main class="pt-16">
-      <article class="max-w-[1200px] mx-auto px-4 sm:px-6 py-8">
-        <!-- Breadcrumb & nav -->
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <a
-            href={animeHref}
-            class="inline-flex items-center gap-2 text-zinc-400 hover:text-white text-sm transition-colors"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m15 18-6-6 6-6"/>
-            </svg>
-            Kembali ke anime
-          </a>
-          <div class="flex gap-2">
-            {episode.hasPrevEpisode && episode.prevEpisode && (
-              <a
-                href={episode.prevEpisode.href}
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/30 text-sm font-medium transition-colors"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="m15 18-6-6 6-6"/>
-                </svg>
-                Episode Sebelumnya
-              </a>
-            )}
-            {episode.hasNextEpisode && episode.nextEpisode && (
-              <a
-                href={episode.nextEpisode.href}
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/30 text-sm font-medium transition-colors"
-              >
-                Episode Berikutnya
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="m9 18 6-6-6-6"/>
-                </svg>
-              </a>
-            )}
-          </div>
-        </div>
-
-        <h1 class="text-xl sm:text-2xl font-bold text-white mb-1">{episode.title}</h1>
-        {episode.releaseTime && (
-          <p class="text-zinc-500 text-sm mb-6">{episode.releaseTime}</p>
-        )}
-
-        <!-- Video player -->
-        <section class="mb-8">
-          <div class="aspect-video w-full rounded-xl overflow-hidden bg-black border border-white/10">
-            <iframe
-              src={episode.defaultStreamingUrl}
-              title={episode.title}
-              class="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowfullscreen
-              loading="lazy"
-            />
-          </div>
-        </section>
-
-        <!-- Server / quality -->
-        {episode.server?.qualities?.length > 0 && (
-          <section class="mb-8">
-            <h2 class="text-lg font-bold text-white mb-3">Server streaming</h2>
-            <div class="space-y-4">
-              {episode.server.qualities.map((q) => (
-                <div>
-                  <p class="text-zinc-400 text-sm font-medium mb-2">{q.title}</p>
-                  <div class="flex flex-wrap gap-2">
-                    {q.serverList.map((s) => (
-                      <a
-                        href={s.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="px-3 py-2 rounded-lg bg-[#1a1a24] border border-white/10 text-zinc-300 hover:bg-rose-500/20 hover:text-white hover:border-rose-500/30 text-sm transition-colors"
-                      >
-                        {s.title}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <!-- Download -->
-        {episode.downloadUrl?.qualities?.length > 0 && (
-          <section class="mb-8">
-            <h2 class="text-lg font-bold text-white mb-3">Download</h2>
-            <div class="space-y-3">
-              {episode.downloadUrl.qualities.map((q) => (
-                <details class="rounded-xl bg-[#1a1a24] border border-white/10 overflow-hidden group">
-                  <summary class="px-4 py-3 cursor-pointer list-none flex items-center justify-between text-white font-medium hover:bg-white/5 transition-colors">
-                    <span>{q.title}</span>
-                    <span class="text-zinc-500 text-sm">{q.size}</span>
-                  </summary>
-                  <div class="px-4 pb-4 pt-0 flex flex-wrap gap-2 border-t border-white/10 pt-3">
-                    {q.urls.map((u) => (
-                      <a
-                        href={u.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="px-3 py-2 rounded-lg bg-white/5 hover:bg-rose-500/20 border border-white/10 hover:border-rose-500/30 text-sm transition-colors"
-                      >
-                        {u.title}
-                      </a>
-                    ))}
-                  </div>
-                </details>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <!-- Episode list (info) -->
-        {episode.info?.episodeList?.length > 0 && (
-          <section>
-            <h2 class="text-lg font-bold text-white mb-3">Daftar episode</h2>
-            <div class="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-2">
-              {episode.info.episodeList.map((ep) => (
-                <a
-                  href={ep.href}
-                  class:list={[
-                    'flex items-center justify-center py-2.5 rounded-lg text-sm font-medium transition-colors',
-                    ep.episodeId === id
-                      ? 'bg-rose-500/30 text-white border border-rose-500/50'
-                      : 'bg-[#1a1a24] border border-white/10 text-zinc-300 hover:bg-white/10 hover:text-white'
-                  ]}
-                >
-                  {ep.title}
-                </a>
-              ))}
-            </div>
-          </section>
-        )}
-      </article>
+      <EpisodeDetailPage
+        client:load
+        episodeId={episodeId}
+        initialData={initialEpisode}
+      />
     </main>
 
-    <footer class="border-t border-white/[0.08] py-8 mt-12">
-      <div class="max-w-[1200px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <footer class="border-t border-white/8 py-8 mt-12">
+      <div
+        class="max-w-[1200px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+      >
         <a href="/" class="flex items-center gap-2 text-white font-bold">
-          <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-sm">S</span>
+          <span
+            class="w-8 h-8 rounded-lg bg-linear-to-br from-rose-500 to-pink-600 flex items-center justify-center text-sm"
+            >S</span
+          >
           StreamHub
         </a>
         <p class="text-zinc-500 text-sm">© 2024 StreamHub. Anime Sub Indo.</p>

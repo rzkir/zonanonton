@@ -1,34 +1,42 @@
 ---
+import "@/styles/global.css";
+
+import Header from "@/components/streaming/Header.astro";
+
+import { AnimeDetailPage } from "@/components/streaming/AnimeDetailPage";
+
+import { fetchAnimeDetail } from "@/lib/FetchAnime";
+
 export const prerender = false;
 
-import '../../../styles/global.css';
-import Header from '../../../components/streaming/Header.astro';
-import ContentRow from '../../../components/streaming/ContentRow.astro';
-import MediaCard from '../../../components/streaming/MediaCard';
-import { fetchAnimeDetail } from '../../../../services/FetchAnime';
-
 const { id } = Astro.params;
-if (!id) {
-  return Astro.redirect('/');
-}
+const animeId = id ?? "";
+if (!animeId) return Astro.redirect("/");
 
-const anime = await fetchAnimeDetail(id, import.meta.env.API_SECRET);
-if (!anime) {
-  return Astro.redirect('/');
-}
+const apiBase = import.meta.env.API_BASE ?? import.meta.env.PUBLIC_API_BASE;
+const apiSecret =
+  import.meta.env.API_SECRET ?? import.meta.env.PUBLIC_API_SECRET;
+const initialAnime = await fetchAnimeDetail(animeId, { apiBase, apiSecret });
+const title = initialAnime?.title ?? "Anime";
+const description = initialAnime?.synopsis?.paragraphs?.[0] ?? title;
 ---
 
 <html lang="id" class="streaming-app dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="generator" content={Astro.generator} />
-    <title>{anime.title} – StreamHub</title>
-    <meta name="description" content={anime.synopsis?.paragraphs?.[0] ?? anime.title} />
-    <meta property="og:title" content={anime.title} />
-    <meta property="og:image" content={anime.poster} />
+    <title>{title} – StreamHub</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    {
+      initialAnime?.poster && (
+        <meta property="og:image" content={initialAnime.poster} />
+      )
+    }
     <link rel="preconnect" href="https://otakudesu.best" />
   </head>
 
@@ -36,143 +44,22 @@ if (!anime) {
     <Header />
 
     <main class="pt-16">
-      <article class="max-w-[1600px] mx-auto px-4 sm:px-6 pb-16">
-        <!-- Hero: poster + info -->
-        <div class="flex flex-col lg:flex-row gap-8 lg:gap-12 py-8">
-          <div class="shrink-0 w-full lg:w-72 aspect-[2/3] rounded-xl overflow-hidden bg-[#1a1a24] border border-white/10">
-            <img
-              src={anime.poster}
-              alt={anime.title}
-              class="w-full h-full object-cover"
-              width="288"
-              height="432"
-            />
-          </div>
-
-          <div class="flex-1 min-w-0">
-            <a
-              href="/"
-              class="inline-flex items-center gap-2 text-zinc-400 hover:text-white text-sm mb-6 transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="m15 18-6-6 6-6"/>
-              </svg>
-              Kembali
-            </a>
-            <h1 class="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-2">
-              {anime.title}
-            </h1>
-            {anime.japanese && (
-              <p class="text-zinc-400 text-lg mb-6">{anime.japanese}</p>
-            )}
-
-            <div class="flex flex-wrap gap-2 mb-6">
-              {anime.genreList?.map((g) => (
-                <a
-                  href={g.href}
-                  class="px-3 py-1 rounded-lg text-sm bg-white/10 text-zinc-300 hover:bg-rose-500/20 hover:text-rose-400 border border-white/10 hover:border-rose-500/30 transition-colors"
-                >
-                  {g.title}
-                </a>
-              ))}
-            </div>
-
-            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              {anime.score && (
-                <>
-                  <dt class="text-zinc-500">Score</dt>
-                  <dd class="text-white">{anime.score}</dd>
-                </>
-              )}
-              {anime.status && (
-                <>
-                  <dt class="text-zinc-500">Status</dt>
-                  <dd class="text-white">{anime.status}</dd>
-                </>
-              )}
-              {anime.episodes > 0 && (
-                <>
-                  <dt class="text-zinc-500">Episode</dt>
-                  <dd class="text-white">{anime.episodes}</dd>
-                </>
-              )}
-              {anime.duration && (
-                <>
-                  <dt class="text-zinc-500">Durasi</dt>
-                  <dd class="text-white">{anime.duration}</dd>
-                </>
-              )}
-              {anime.aired && (
-                <>
-                  <dt class="text-zinc-500">Tayang</dt>
-                  <dd class="text-white">{anime.aired}</dd>
-                </>
-              )}
-              {anime.studios && (
-                <>
-                  <dt class="text-zinc-500">Studio</dt>
-                  <dd class="text-white">{anime.studios}</dd>
-                </>
-              )}
-              {anime.producers && (
-                <>
-                  <dt class="text-zinc-500">Produser</dt>
-                  <dd class="text-white">{anime.producers}</dd>
-                </>
-              )}
-            </dl>
-          </div>
-        </div>
-
-        <!-- Synopsis -->
-        {anime.synopsis?.paragraphs?.length > 0 && (
-          <section class="mb-10">
-            <h2 class="text-xl font-bold text-white mb-4">Sinopsis</h2>
-            <div class="text-zinc-300 space-y-3 max-w-3xl">
-              {anime.synopsis.paragraphs.map((p) => (
-                <p>{p}</p>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <!-- Episode list -->
-        {anime.episodeList?.length > 0 && (
-          <section class="mb-10">
-            <h2 class="text-xl font-bold text-white mb-4">Daftar Episode</h2>
-            <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-              {anime.episodeList.map((ep) => (
-                <a
-                  href={ep.href}
-                  class="flex items-center justify-center py-3 rounded-lg bg-[#1a1a24] border border-white/10 text-white font-medium hover:bg-rose-500/20 hover:border-rose-500/30 transition-colors"
-                >
-                  {ep.title}
-                </a>
-              ))}
-            </div>
-          </section>
-        )}
-
-        <!-- Recommended -->
-        {anime.recommendedAnimeList?.length > 0 && (
-          <ContentRow title="Rekomendasi">
-            {anime.recommendedAnimeList.map((rec) => (
-              <MediaCard
-                title={rec.title}
-                image={rec.poster}
-                type="anime"
-                href={rec.href}
-              />
-            ))}
-          </ContentRow>
-        )}
-      </article>
+      <AnimeDetailPage
+        client:load
+        animeId={animeId}
+        initialData={initialAnime}
+      />
     </main>
 
     <footer class="border-t border-white/[0.08] py-8">
-      <div class="max-w-[1600px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div
+        class="max-w-[1600px] mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4"
+      >
         <a href="/" class="flex items-center gap-2 text-white font-bold">
-          <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-sm">S</span>
+          <span
+            class="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-sm"
+            >S</span
+          >
           StreamHub
         </a>
         <p class="text-zinc-500 text-sm">© 2024 StreamHub. Anime Sub Indo.</p>

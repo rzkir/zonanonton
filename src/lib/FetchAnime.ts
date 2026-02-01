@@ -1,44 +1,8 @@
-const API_BASE = import.meta.env.API_BASE;
+const API_BASE = import.meta.env.PUBLIC_API_BASE;
 
-const API_URL = `${API_BASE}/home`;
+const DEFAULT_API_SECRET = import.meta.env.PUBLIC_API_SECRET;
 
-const DEFAULT_API_SECRET = import.meta.env.API_SECRET;
-
-export interface OngoingAnime {
-    title: string;
-    poster: string;
-    episodes: number;
-    releaseDay: string;
-    latestReleaseDate: string;
-    animeId: string;
-    href: string;
-}
-
-export interface CompletedAnime {
-    title: string;
-    poster: string;
-    episodes: number;
-    score: string;
-    lastReleaseDate: string;
-    animeId: string;
-    href: string;
-}
-
-export interface HeroData {
-    title: string;
-    description: string;
-    image: string;
-    type: 'anime';
-    year: string;
-    rating: string;
-    href: string;
-}
-
-export interface HomeData {
-    ongoingList: OngoingAnime[];
-    completedList: CompletedAnime[];
-    hero: HeroData;
-}
+export type ApiEnv = { apiBase?: string; apiSecret?: string };
 
 const defaultHero: HeroData = {
     title: 'StreamHub Anime',
@@ -50,8 +14,9 @@ const defaultHero: HeroData = {
     href: '#',
 };
 
-export async function fetchHomeData(apiSecret?: string): Promise<HomeData> {
-    const secret = apiSecret ?? (typeof import.meta !== 'undefined' && import.meta.env?.API_SECRET) ?? DEFAULT_API_SECRET;
+export async function fetchHomeData(opts?: ApiEnv | string): Promise<HomeData> {
+    const apiBase = (typeof opts === 'object' && opts?.apiBase) ?? API_BASE;
+    const secret = (typeof opts === 'object' ? opts?.apiSecret : opts) ?? (typeof import.meta !== 'undefined' && import.meta.env?.API_SECRET) ?? DEFAULT_API_SECRET;
     const result: HomeData = {
         ongoingList: [],
         completedList: [],
@@ -59,7 +24,7 @@ export async function fetchHomeData(apiSecret?: string): Promise<HomeData> {
     };
 
     try {
-        const res = await fetch(API_URL, {
+        const res = await fetch(`${apiBase}/home`, {
             headers: {
                 'X-API-Key': secret,
                 'Content-Type': 'application/json',
@@ -140,15 +105,13 @@ export interface AnimeDetailData {
 
 export async function fetchAnimeDetail(
     animeId: string,
-    apiSecret?: string
+    opts?: ApiEnv | string
 ): Promise<AnimeDetailData | null> {
-    const secret =
-        apiSecret ??
-        (typeof import.meta !== 'undefined' && import.meta.env?.API_SECRET) ??
-        DEFAULT_API_SECRET;
+    const apiBase = (typeof opts === 'object' && opts?.apiBase) ?? API_BASE;
+    const secret = (typeof opts === 'object' ? opts?.apiSecret : opts) ?? (typeof import.meta !== 'undefined' && import.meta.env?.API_SECRET) ?? DEFAULT_API_SECRET;
 
     try {
-        const res = await fetch(`${API_BASE}/anime/${animeId}`, {
+        const res = await fetch(`${apiBase}/anime/${animeId}`, {
             headers: {
                 'X-API-Key': secret,
                 'Content-Type': 'application/json',
@@ -221,15 +184,13 @@ export interface EpisodeDetailData {
 
 export async function fetchEpisodeDetail(
     episodeId: string,
-    apiSecret?: string
+    opts?: ApiEnv | string
 ): Promise<EpisodeDetailData | null> {
-    const secret =
-        apiSecret ??
-        (typeof import.meta !== 'undefined' && import.meta.env?.API_SECRET) ??
-        DEFAULT_API_SECRET;
+    const apiBase = (typeof opts === 'object' && opts?.apiBase) ?? API_BASE;
+    const secret = (typeof opts === 'object' ? opts?.apiSecret : opts) ?? (typeof import.meta !== 'undefined' && import.meta.env?.API_SECRET) ?? DEFAULT_API_SECRET;
 
     try {
-        const res = await fetch(`${API_BASE}/episode/${episodeId}`, {
+        const res = await fetch(`${apiBase}/episode/${episodeId}`, {
             headers: {
                 'X-API-Key': secret,
                 'Content-Type': 'application/json',
