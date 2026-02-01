@@ -1,0 +1,697 @@
+---
+import type {
+  ServerItem,
+  QualityServer,
+  DownloadQuality,
+  DownloadLink,
+} from "@/lib/FetchAnime";
+
+function getServerId(s: ServerItem): string {
+  if (/^https?:\/\//i.test(s.href)) return s.serverId;
+  const m = s.href.match(/\/server\/([^/]+)/i);
+  return m ? m[1] : s.serverId;
+}
+
+const {
+  episodeId,
+  initialData,
+  apiBase = "",
+  apiSecret = "",
+  recommendedAnimeList = [],
+} = Astro.props;
+const episode = initialData ?? null;
+
+// Extract episode number from title
+function getEpisodeNumber(title: string | number): string {
+  if (typeof title === "number") return String(title);
+  const match = title.match(/\d+/);
+  return match ? match[0] : String(title);
+}
+
+// Group servers by name
+function groupServersByName(qualities: QualityServer[]) {
+  const serverMap = new Map<
+    string,
+    Array<{ quality: string; server: ServerItem }>
+  >();
+
+  qualities.forEach((q) => {
+    q.serverList.forEach((s) => {
+      const serverName = s.title;
+      if (!serverMap.has(serverName)) {
+        serverMap.set(serverName, []);
+      }
+      serverMap.get(serverName)!.push({ quality: q.title, server: s });
+    });
+  });
+
+  return Array.from(serverMap.entries()).map(([serverName, items]) => ({
+    serverName,
+    items,
+  }));
+}
+---
+
+<style>
+  .video-gradient-overlay {
+    background: linear-gradient(
+      0deg,
+      rgba(10, 11, 20, 0.9) 0%,
+      rgba(10, 11, 20, 0) 50%,
+      rgba(10, 11, 20, 0.4) 100%
+    );
+  }
+
+  .episode-card.active {
+    background: rgba(34, 211, 238, 0.08);
+    border-left: 3px solid var(--accent-cyan);
+  }
+
+  .episode-sidebar-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .episode-sidebar-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .episode-sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(34, 211, 238, 0.3);
+    border-radius: 10px;
+  }
+
+  .glow-cyan {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.15);
+  }
+
+  .episode-server-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1rem;
+    padding-right: 2.5rem;
+  }
+
+  .episode-server-select option {
+    background-color: #1a1a24;
+    color: #ffffff;
+  }
+</style>
+
+{
+  !episode ? (
+    <div class="max-w-7xl mx-auto px-6 md:px-12 py-16 text-center">
+      <p class="text-gray-400 mb-4">Gagal memuat episode.</p>
+      <a href="/" class="inline-flex gap-2 text-cyan-400 hover:text-cyan-300">
+        ← Kembali ke beranda
+      </a>
+    </div>
+  ) : (
+    <main
+      class="flex-grow flex flex-col lg:flex-row min-h-screen bg-[#0a0b14]"
+      data-episode-player
+    >
+      {/* Left Content Area (Player + Info) */}
+      <div class="flex-grow w-full lg:w-[72%] border-r border-white/5">
+        {/* Video Player Container */}
+        <div class="relative w-full aspect-video bg-black group overflow-hidden">
+          <div
+            id="episode-server-loading"
+            class="hidden absolute inset-0 z-20 bg-black/90 items-center justify-center text-gray-400"
+          >
+            <div class="text-center">
+              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400 mx-auto mb-4" />
+              <p>Memuat server…</p>
+            </div>
+          </div>
+          <iframe
+            id="episode-iframe"
+            src={episode.defaultStreamingUrl}
+            title={episode.title}
+            class="w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+            loading="lazy"
+          />
+
+          {/* Video Controls Overlay (Static for iframe) */}
+          <div class="absolute inset-0 video-gradient-overlay opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-6 pointer-events-none">
+            <div class="flex justify-between items-start">
+              <div class="bg-black/40 backdrop-blur-md rounded px-3 py-1 text-xs font-bold border border-white/10 pointer-events-auto">
+                1080p • AUTO
+              </div>
+              <div class="flex gap-4 pointer-events-auto">
+                <button class="text-white hover:text-cyan-400 transition-colors">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z" />
+                    <path d="M18 2h.12a2 2 0 0 1 2 2v18a2 2 0 0 1-2 2H18" />
+                    <path d="M7 2H6.88a2 2 0 0 0-2 2v18a2 2 0 0 0 2 2H7" />
+                  </svg>
+                </button>
+                <button class="text-white hover:text-cyan-400 transition-colors">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Episode Details & Metadata */}
+        <div class="px-8 py-10 max-w-5xl">
+          <div class="flex flex-col md:flex-row justify-between items-start gap-6">
+            <div class="space-y-2">
+              <div class="flex items-center gap-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-400/30 uppercase">
+                  Episode{" "}
+                  {getEpisodeNumber(
+                    episode.info?.episodeList?.find(
+                      (e: EpisodeItem) => e.episodeId === episodeId,
+                    )?.title ?? episode.title,
+                  )}
+                </span>
+                <span class="text-sm text-gray-500">Season 1</span>
+              </div>
+              <h1 class="text-4xl font-bold">{episode.title}</h1>
+              {episode.info?.credit && (
+                <p class="text-gray-400 max-w-3xl leading-relaxed text-sm lg:text-base">
+                  {episode.info.credit}
+                </p>
+              )}
+            </div>
+
+            <div class="flex items-center gap-4 shrink-0">
+              <button class="flex flex-col items-center gap-1 group">
+                <div class="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-cyan-400/10 group-hover:border-cyan-400/40 transition-all">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="text-gray-400 group-hover:text-cyan-400"
+                  >
+                    <path d="M7 10v12" />
+                    <path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76l2.83-2.83a2 2 0 0 1 2.82 0L15 5.88z" />
+                  </svg>
+                </div>
+                <span class="text-[10px] font-bold text-gray-500 uppercase">
+                  Like
+                </span>
+              </button>
+              <button class="flex flex-col items-center gap-1 group">
+                <div class="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-purple-400/10 group-hover:border-purple-400/40 transition-all">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="text-gray-400 group-hover:text-purple-400"
+                  >
+                    <circle cx="18" cy="5" r="3" />
+                    <circle cx="6" cy="12" r="3" />
+                    <circle cx="18" cy="19" r="3" />
+                    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                  </svg>
+                </div>
+                <span class="text-[10px] font-bold text-gray-500 uppercase">
+                  Share
+                </span>
+              </button>
+              <button class="flex flex-col items-center gap-1 group">
+                <div class="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-all">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="text-gray-400 group-hover:text-white"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </div>
+                <span class="text-[10px] font-bold text-gray-500 uppercase">
+                  Save
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Detailed Stats */}
+          <div class="mt-8 flex items-center gap-8 text-xs font-medium text-gray-500 uppercase tracking-widest border-y border-white/5 py-6">
+            {episode.releaseTime && (
+              <div class="flex items-center gap-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="text-purple-400"
+                >
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                <span>Published {episode.releaseTime}</span>
+              </div>
+            )}
+            {episode.info?.duration && (
+              <div class="flex items-center gap-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="text-cyan-400"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <span>{episode.info.duration}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Server Selection */}
+          {episode.server?.qualities?.length > 0 && (
+            <div class="mt-8 mb-8">
+              <h3 class="text-lg font-bold text-white mb-4">
+                Server Streaming
+              </h3>
+              <div class="space-y-4">
+                {groupServersByName(episode.server.qualities).map((group) => (
+                  <div>
+                    <label class="block text-gray-400 text-sm font-medium mb-2">
+                      {group.serverName}
+                    </label>
+                    <select
+                      class="episode-server-select w-full px-4 py-2.5 rounded-lg border text-sm font-medium transition-colors bg-white/5 border-white/10 text-white hover:bg-white/10 focus:outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30 data-[loading=true]:opacity-60 data-[loading=true]:cursor-wait"
+                      data-server-name={group.serverName}
+                    >
+                      <option value="" selected disabled>
+                        Pilih Kualitas
+                      </option>
+                      {group.items.map((item) => {
+                        const serverId = getServerId(item.server);
+                        const isDirectUrl = /^https?:\/\//i.test(
+                          item.server.href,
+                        );
+                        return (
+                          <option
+                            value={serverId}
+                            data-href={item.server.href}
+                            data-direct={isDirectUrl ? "true" : "false"}
+                            data-quality={item.quality}
+                          >
+                            {item.quality}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Download Section */}
+          {episode.downloadUrl?.qualities?.length > 0 && (
+            <div class="mt-8 mb-8">
+              <h3 class="text-lg font-bold text-white mb-4">Download</h3>
+              <div class="space-y-3">
+                {episode.downloadUrl.qualities.map((q: DownloadQuality) => (
+                  <details class="rounded-xl bg-white/5 border border-white/10 overflow-hidden group">
+                    <summary class="px-4 py-3 cursor-pointer list-none flex items-center justify-between text-white font-medium hover:bg-white/5 transition-colors">
+                      <span>{q.title}</span>
+                      <span class="text-gray-500 text-sm">{q.size}</span>
+                    </summary>
+                    <div class="px-4 pb-4 pt-3 flex flex-wrap gap-2 border-t border-white/10">
+                      {q.urls.map((u: DownloadLink) => (
+                        <a
+                          href={u.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="px-3 py-2 rounded-lg bg-white/5 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-500/30 text-sm transition-colors"
+                        >
+                          {u.title}
+                        </a>
+                      ))}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Recommendations Section */}
+          {recommendedAnimeList?.length > 0 && (
+            <div class="mt-12">
+              <div class="flex items-center justify-between mb-8">
+                <h3 class="text-2xl font-bold">You Might Like</h3>
+                <a
+                  href={`/otakudesu/anime/${episode.animeId}`}
+                  class="text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all"
+                >
+                  View All
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </a>
+              </div>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {recommendedAnimeList
+                  .slice(0, 4)
+                  .map((rec: RecommendedAnime) => (
+                    <a href={rec.href} class="group cursor-pointer">
+                      <div class="relative aspect-[3/4] rounded-lg overflow-hidden mb-3">
+                        <img
+                          src={rec.poster}
+                          alt={rec.title}
+                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold">
+                          9.4
+                        </div>
+                      </div>
+                      <h4 class="text-sm font-bold group-hover:text-cyan-400 transition-colors truncate">
+                        {rec.title}
+                      </h4>
+                      <p class="text-[11px] text-gray-500 uppercase">Anime</p>
+                    </a>
+                  ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right Sidebar (Episode List) */}
+      {episode.info?.episodeList?.length > 0 && (
+        <aside class="w-full lg:w-[28%] bg-black/20 flex flex-col max-h-screen overflow-hidden">
+          <div class="p-6 border-b border-white/5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-bold flex items-center gap-2">
+                Episodes
+                <span class="text-sm font-normal text-gray-500">
+                  ({episode.info.episodeList.length})
+                </span>
+              </h3>
+              <button class="p-2 hover:bg-white/5 rounded-lg transition-colors">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  class="text-gray-400"
+                >
+                  <line x1="21" y1="6" x2="7" y2="6" />
+                  <line x1="21" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="18" x2="7" y2="18" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex-grow overflow-y-auto episode-sidebar-scrollbar">
+            {episode.info.episodeList.map((ep: EpisodeItem) => {
+              const isActive = ep.episodeId === episodeId;
+              return (
+                <a
+                  href={ep.href}
+                  class:list={[
+                    "episode-card flex gap-4 p-4 hover:bg-white/5 transition-all group",
+                    isActive && "active",
+                  ]}
+                >
+                  <div
+                    class:list={[
+                      "relative w-32 shrink-0 aspect-video rounded overflow-hidden bg-gradient-to-br from-cyan-500/20 to-purple-500/20",
+                      isActive && "shadow-lg glow-cyan",
+                    ]}
+                  >
+                    <div class="w-full h-full flex items-center justify-center bg-[#1a1a24]">
+                      <span class="text-xs font-bold text-gray-500">
+                        EP{" "}
+                        {typeof ep.title === "number"
+                          ? ep.title
+                          : getEpisodeNumber(ep.title)}
+                      </span>
+                    </div>
+                    {isActive ? (
+                      <>
+                        <div class="absolute inset-0 bg-cyan-400/20 flex items-center justify-center">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="text-white"
+                          >
+                            <rect x="6" y="4" width="4" height="16" />
+                            <rect x="14" y="4" width="4" height="16" />
+                          </svg>
+                        </div>
+                        <div class="absolute bottom-0 left-0 w-full h-1 bg-white/20">
+                          <div class="h-full bg-cyan-400" style="width: 45%" />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            class="text-white"
+                          >
+                            <polygon points="5 3 19 12 5 21 5 3" />
+                          </svg>
+                        </div>
+                        {episode.info?.duration && (
+                          <div class="absolute bottom-1 right-1 bg-black/80 px-1 rounded text-[9px] font-bold">
+                            {episode.info.duration}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  <div class="flex flex-col justify-center gap-1">
+                    <h4
+                      class:list={[
+                        "text-xs font-bold transition-colors",
+                        isActive
+                          ? "text-white"
+                          : "text-gray-300 group-hover:text-white",
+                      ]}
+                    >
+                      {typeof ep.title === "number"
+                        ? `Episode ${ep.title}`
+                        : ep.title}
+                    </h4>
+                    {isActive ? (
+                      <p class="text-[10px] text-cyan-400 uppercase font-bold tracking-tight">
+                        Now Playing
+                      </p>
+                    ) : (
+                      <p class="text-[10px] text-gray-500 uppercase font-medium">
+                        Episode {ep.title}
+                      </p>
+                    )}
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+
+          {/* Next Episode Button */}
+          {episode.hasNextEpisode && episode.nextEpisode && (
+            <div class="p-6 bg-black/40 border-t border-white/5">
+              <a
+                href={episode.nextEpisode.href}
+                class="w-full py-3 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 text-sm font-bold tracking-widest hover:brightness-110 transition-all uppercase flex items-center justify-center gap-2"
+              >
+                Next Episode
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </a>
+            </div>
+          )}
+        </aside>
+      )}
+    </main>
+  )
+}
+
+<script define:vars={{ apiBase, apiSecret }}>
+  (function () {
+    if (!document.querySelector("[data-episode-player]")) return;
+    const iframe = document.getElementById("episode-iframe");
+    const loadingEl = document.getElementById("episode-server-loading");
+    const selects = document.querySelectorAll(".episode-server-select");
+    const resolvedUrls = {};
+    let selectedServerId = null;
+
+    async function fetchServerUrl(serverIdOrPath) {
+      const id =
+        serverIdOrPath.replace(/^.*\/server\//i, "").replace(/\/$/, "") ||
+        serverIdOrPath;
+      if (!apiBase || !apiSecret) return null;
+      const res = await fetch(`${apiBase}/server/${id}`, {
+        headers: { "X-API-Key": apiSecret, "Content-Type": "application/json" },
+      });
+      if (!res.ok) return null;
+      const json = await res.json();
+      return json?.ok && json?.data?.url ? json.data.url : null;
+    }
+
+    function setIframeSrc(url) {
+      if (iframe) {
+        iframe.style.display = "";
+        iframe.src = url;
+      }
+      if (loadingEl) loadingEl.classList.add("hidden");
+    }
+
+    function setLoading(select, loading) {
+      select.dataset.loading = loading ? "true" : "false";
+      select.disabled = loading;
+    }
+
+    function setActive(serverId) {
+      selectedServerId = serverId;
+    }
+
+    selects.forEach((select) => {
+      select.addEventListener("change", async (e) => {
+        const selectedOption = select.options[select.selectedIndex];
+        if (!selectedOption || !selectedOption.value) return;
+
+        const serverId = selectedOption.value;
+        const href = selectedOption.dataset.href ?? "";
+        const isDirect = selectedOption.dataset.direct === "true";
+
+        if (isDirect && href) {
+          resolvedUrls[serverId] = href;
+          setActive(serverId);
+          setIframeSrc(href);
+          return;
+        }
+        if (resolvedUrls[serverId]) {
+          setActive(serverId);
+          setIframeSrc(resolvedUrls[serverId]);
+          return;
+        }
+
+        setLoading(select, true);
+        if (loadingEl) {
+          loadingEl.classList.remove("hidden");
+          loadingEl.classList.add("flex");
+          if (iframe) iframe.style.display = "none";
+        }
+        const url = await fetchServerUrl(serverId);
+        setLoading(select, false);
+        if (url) {
+          resolvedUrls[serverId] = url;
+          setActive(serverId);
+          setIframeSrc(url);
+        } else {
+          if (loadingEl) {
+            loadingEl.classList.add("hidden");
+            loadingEl.classList.remove("flex");
+          }
+          if (iframe) iframe.style.display = "";
+          // Reset select to first option on error
+          select.selectedIndex = 0;
+        }
+      });
+    });
+  })();
+</script>

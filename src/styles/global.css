@@ -1,7 +1,68 @@
+@import url("https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,700,500&f[]=satoshi@700,500,400&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+
+/* Nebula Stream design tokens */
+:root {
+  --bg-deep: #0a0b14;
+  --accent-cyan: #22d3ee;
+  --accent-purple: #8b5cf6;
+  --accent-pink: #ec4899;
+}
+
+body {
+  font-family: "Satoshi", sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Cabinet Grotesk", sans-serif;
+}
+
+.glass-nav {
+  background: rgba(10, 11, 20, 0.75);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hero-gradient {
+  background: linear-gradient(0deg, var(--bg-deep) 0%, rgba(10, 11, 20, 0.4) 50%, rgba(10, 11, 20, 0) 100%);
+}
+
+.card-hover:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+}
+
+.progress-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.glow-cyan:hover {
+  box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -154,6 +215,35 @@
 .content-row::-webkit-scrollbar-thumb {
   background: var(--stream-border);
   border-radius: 3px;
+}
+
+/* Custom scrollbar for episode list */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(34, 211, 238, 0.2);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 211, 238, 0.5);
+}
+
+/* Poster shadow effect */
+.poster-shadow {
+  box-shadow: 0 0 50px rgba(34, 211, 238, 0.15);
+}
+
+/* Active episode glow */
+.active-episode-glow {
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
 }
 
 @layer base {

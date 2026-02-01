@@ -1,0 +1,349 @@
+---
+import Ongoing from "./ongoing/Ongoing.astro";
+import Completed from "./completed/Completed.astro";
+import Schedule from "./schedule/Schedule.astro";
+
+export interface Props {
+  initialData: HomeData | null;
+  scheduleData?: import("@/lib/FetchAnime").ScheduleData | null;
+}
+
+const { initialData, scheduleData: scheduleDataProp = null } = Astro.props;
+const scheduleData = scheduleDataProp ?? { days: [] };
+
+const data = initialData ?? {
+  ongoingList: [],
+  completedList: [],
+  hero: {
+    title: "StreamHub Anime",
+    description:
+      "Nonton anime ongoing dan completed dengan subtitle Indonesia.",
+    image:
+      "https://otakudesu.best/wp-content/uploads/2025/10/Fumetsu-no-Anata-e-Season-2-Sub.jpg",
+    type: "anime",
+    year: "",
+    rating: "",
+    href: "#",
+  },
+};
+
+const { ongoingList, completedList, hero } = data;
+---
+
+{
+  !data.ongoingList?.length && !data.completedList?.length ? (
+    <div class="max-w-[1440px] mx-auto px-6 py-16 text-center">
+      <p class="text-gray-400 mb-2">Gagal memuat data.</p>
+      <p class="text-gray-500 text-sm mb-4">
+        Pastikan <code class="bg-white/10 px-1 rounded">PUBLIC_API_BASE</code>{" "}
+        dan <code class="bg-white/10 px-1 rounded">PUBLIC_API_SECRET</code> ada
+        di file .env (dev) atau Environment variables (Cloudflare).
+      </p>
+    </div>
+  ) : (
+    <>
+      <!-- Hero Banner -->
+      <section class="relative h-[85vh] w-full overflow-hidden">
+        <div class="absolute inset-0">
+          <img
+            src={hero.image}
+            alt={hero.title}
+            class="w-full h-full object-cover"
+          />
+          <div class="absolute inset-0 bg-gradient-to-r from-[#0a0b14] via-[#0a0b14]/60 to-transparent" />
+          <div class="absolute inset-0 hero-gradient" />
+        </div>
+
+        <div class="relative h-full max-w-[1440px] mx-auto px-6 flex flex-col justify-center pt-20">
+          <div class="max-w-2xl space-y-6">
+            <div class="flex items-center gap-3">
+              <span class="bg-white/10 backdrop-blur-md px-3 py-1 rounded-md text-xs font-bold tracking-widest uppercase">
+                Trending #1
+              </span>
+              {hero.rating && (
+                <span class="text-cyan-400 text-sm font-bold flex items-center gap-1">
+                  <span class="text-yellow-400">★</span>
+                  {hero.rating}
+                </span>
+              )}
+            </div>
+            <h1 class="text-6xl md:text-8xl font-extrabold leading-tight tracking-tighter text-white">
+              {hero.title.split(" ")[0]}
+              {hero.title.split(" ").length > 1 && (
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
+                  {" " + hero.title.split(" ").slice(1).join(" ")}
+                </span>
+              )}
+            </h1>
+            {hero.description && (
+              <p class="text-lg text-gray-300 leading-relaxed max-w-lg line-clamp-2">
+                {hero.description}
+              </p>
+            )}
+            <div class="flex items-center gap-4 pt-4">
+              <a
+                href={hero.href ?? "#"}
+                class="px-8 py-4 bg-white text-black font-bold rounded-full flex items-center gap-3 hover:bg-cyan-400 hover:text-white transition-all duration-300 group shadow-xl shadow-white/5"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  class="ml-0.5"
+                >
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                Watch Now
+              </a>
+              <button
+                type="button"
+                class="px-8 py-4 bg-white/10 backdrop-blur-md text-white font-bold rounded-full flex items-center gap-3 hover:bg-white/20 transition-all border border-white/10"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                Add to List
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Content Sections -->
+      <main class="max-w-[1440px] mx-auto px-6 -mt-32 relative z-10 pb-24 space-y-16">
+        <!-- Ongoing Anime (Continue Watching style) -->
+        <Ongoing ongoingList={ongoingList} />
+
+        <!-- Popular Now (Completed Anime grid) -->
+        <Completed completedList={completedList} />
+
+        <!-- Trending (horizontal scroll - same as Ongoing/Completed row) -->
+        {completedList?.length > 0 && (
+          <section>
+            <div class="flex items-center justify-between mb-8">
+              <h2 class="text-2xl font-bold flex items-center gap-3 text-white">
+                <span class="w-1.5 h-8 bg-pink-500 rounded-full" />
+                Trending
+              </h2>
+              <a
+                href="#"
+                class="text-gray-400 hover:text-cyan-400 text-sm font-medium transition-colors"
+              >
+                Explore Library
+              </a>
+            </div>
+
+            <div class="flex gap-6 overflow-x-auto hide-scrollbar">
+              {completedList.slice(0, 8).map((item: CompletedAnime) => (
+                <a
+                  href={item.href}
+                  class="flex-none w-[200px] group cursor-pointer"
+                >
+                  <div class="relative aspect-[2/3] rounded-xl overflow-hidden mb-3 card-hover transition-all duration-300 border border-white/5">
+                    <img
+                      src={item.poster}
+                      alt={item.title}
+                      class="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                      <span class="text-[10px] text-cyan-400 font-bold uppercase">
+                        Score {item.score}
+                      </span>
+                      <p class="text-xs text-white font-medium">
+                        {item.episodes} eps
+                      </p>
+                    </div>
+                  </div>
+                  <h3 class="font-bold text-sm group-hover:text-cyan-400 transition-colors text-white">
+                    {item.title}
+                  </h3>
+                  <p class="text-xs text-gray-500">{item.lastReleaseDate}</p>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <!-- Release Schedule (dari API) -->
+        <Schedule scheduleData={scheduleData} />
+
+        <!-- Top Rankings (static placeholder) -->
+        <section>
+          <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <h2 class="text-2xl font-bold flex items-center gap-3 text-white">
+              <span class="w-1.5 h-8 bg-purple-500 rounded-full" />
+              Top Rankings
+            </h2>
+            <div class="flex gap-4">
+              <button
+                type="button"
+                class="text-xs font-bold px-4 py-2 rounded-full border border-purple-500 bg-purple-500 text-white"
+              >
+                Top Rated
+              </button>
+              <button
+                type="button"
+                class="text-xs font-bold px-4 py-2 rounded-full border border-white/10 text-gray-400 hover:text-white transition-all"
+              >
+                Trending Weekly
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
+            <div class="flex items-center gap-6 p-3 rounded-2xl hover:bg-white/5 transition-colors group cursor-pointer">
+              <div class="relative">
+                <span class="text-5xl font-black text-white/10 italic absolute -left-4 top-1/2 -translate-y-1/2">
+                  #1
+                </span>
+                <div class="w-16 h-20 rounded-lg overflow-hidden border border-purple-500 shadow-lg shadow-purple-500/20">
+                  <img
+                    src={ongoingList?.[0]?.poster ?? hero.image}
+                    alt="Rank #1"
+                    class="w-full h-full object-cover"
+                    width="64"
+                    height="80"
+                  />
+                </div>
+                <div class="absolute -bottom-2 -right-2 w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center border-4 border-[#0a0b14]">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    class="text-white"
+                  >
+                    <path d="M12 2L15 8.5 22 9.3 17 14 18.2 21 12 18 5.8 21 7 14 2 9.3 9 8.5 12 2z" />
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-1">
+                <h4 class="font-bold group-hover:text-purple-400 transition-colors text-white">
+                  {ongoingList?.[0]?.title ?? hero.title}
+                </h4>
+                <div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                  <span class="text-yellow-500 flex items-center gap-1">★ 9.9</span>
+                  <span>Top this week</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-6 p-3 rounded-2xl hover:bg-white/5 transition-colors group cursor-pointer">
+              <div class="relative">
+                <span class="text-5xl font-black text-white/10 italic absolute -left-4 top-1/2 -translate-y-1/2">
+                  #2
+                </span>
+                <div class="w-16 h-20 rounded-lg overflow-hidden border border-white/10">
+                  <img
+                    src={ongoingList?.[1]?.poster ?? completedList?.[0]?.poster ?? hero.image}
+                    alt="Rank #2"
+                    class="w-full h-full object-cover"
+                    width="64"
+                    height="80"
+                  />
+                </div>
+                <div class="absolute -bottom-2 -right-2 w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center border-4 border-[#0a0b14]">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    class="text-white"
+                  >
+                    <path d="M12 2L15 8.5 22 9.3 17 14 18.2 21 12 18 5.8 21 7 14 2 9.3 9 8.5 12 2z" />
+                  </svg>
+                </div>
+              </div>
+              <div class="flex-1">
+                <h4 class="font-bold group-hover:text-purple-400 transition-colors text-white">
+                  {ongoingList?.[1]?.title ?? completedList?.[0]?.title ?? "Anime Title"}
+                </h4>
+                <div class="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                  <span class="text-yellow-500 flex items-center gap-1">★ 9.8</span>
+                  <span>Popular</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Elite Community (static placeholder) -->
+        <section>
+          <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl font-bold flex items-center gap-3 text-white">
+              <span class="w-1.5 h-8 bg-pink-500 rounded-full" />
+              Elite Community
+            </h2>
+            <div class="flex gap-6">
+              <button
+                type="button"
+                class="text-sm font-bold text-pink-500 border-b-2 border-pink-500 pb-1"
+              >
+                This Month
+              </button>
+              <button
+                type="button"
+                class="text-sm font-bold text-gray-500 hover:text-white transition-colors pb-1"
+              >
+                All Time
+              </button>
+            </div>
+          </div>
+
+          <div class="flex gap-6 overflow-x-auto hide-scrollbar pb-6">
+            {[1, 2, 3].map((i) => (
+              <div class="flex-none w-[280px] bg-gradient-to-br from-white/10 to-transparent border border-white/5 rounded-2xl p-6 relative group">
+                <div class="absolute top-4 right-4 text-xs font-bold text-pink-500">
+                  RANK 0{i}
+                </div>
+                <div class="flex flex-col items-center text-center">
+                  <div class="w-20 h-20 rounded-full p-1 bg-gradient-to-tr from-pink-500 to-yellow-500 mb-4">
+                    <img
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=User${i}`}
+                      alt="User"
+                      class="w-full h-full rounded-full border-4 border-[#0a0b14] object-cover"
+                      width="80"
+                      height="80"
+                    />
+                  </div>
+                  <h4 class="text-lg font-bold flex items-center gap-2 mb-1 text-white">
+                    User_{i}
+                  </h4>
+                  <p class="text-xs text-gray-500 font-medium uppercase mb-6">
+                    Streamer • LVL {70 + i * 5}
+                  </p>
+                  <div class="grid grid-cols-2 w-full gap-4 pt-4 border-t border-white/5">
+                    <div>
+                      <p class="text-lg font-bold text-white">1.2k</p>
+                      <p class="text-[10px] text-gray-500 uppercase font-bold">
+                        Episodes
+                      </p>
+                    </div>
+                    <div>
+                      <p class="text-lg font-bold text-white">452</p>
+                      <p class="text-[10px] text-gray-500 uppercase font-bold">
+                        Reviews
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+    </>
+  )
+}

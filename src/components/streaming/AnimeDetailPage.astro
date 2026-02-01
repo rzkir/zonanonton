@@ -1,0 +1,423 @@
+---
+export interface Props {
+  animeId: string;
+  initialData?: AnimeDetailData | null;
+}
+
+const { animeId, initialData } = Astro.props;
+const anime = initialData ?? null;
+
+// Helper function to get genre color classes
+function getGenreColor(index: number): string {
+  const colors = [
+    "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
+    "bg-purple-500/10 text-purple-400 border-purple-500/20",
+    "bg-pink-500/10 text-pink-400 border-pink-500/20",
+  ];
+  return colors[index % colors.length];
+}
+---
+
+<style>
+  .poster-shadow {
+    box-shadow: 0 0 50px rgba(34, 211, 238, 0.15);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(34, 211, 238, 0.2);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(34, 211, 238, 0.5);
+  }
+
+  .active-episode-glow {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+  }
+</style>
+
+{
+  !anime ? (
+    <div class="max-w-7xl mx-auto px-6 md:px-12 lg:px-24 py-16 text-center">
+      <p class="text-gray-400 mb-4">Gagal memuat data anime.</p>
+      <a href="/" class="inline-flex gap-2 text-cyan-400 hover:text-cyan-300">
+        ← Kembali ke beranda
+      </a>
+    </div>
+  ) : (
+    <main class="flex-grow pt-32 pb-20 px-6 md:px-12 lg:px-24 max-w-7xl mx-auto w-full">
+      <section class="flex flex-col lg:flex-row gap-12 lg:gap-20">
+        {/* Poster Section */}
+        <div class="w-full lg:w-1/3 shrink-0">
+          <div class="relative group rounded-2xl overflow-hidden poster-shadow">
+            <img
+              src={anime.poster}
+              alt={anime.title}
+              class="w-full aspect-[2/3] object-cover rounded-2xl scale-100 group-hover:scale-105 transition-transform duration-700"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+            {anime.score && (
+              <div class="absolute bottom-6 left-6 right-6 flex flex-col gap-2">
+                <div class="flex items-center gap-2 bg-black/60 backdrop-blur-md w-fit px-3 py-1.5 rounded-lg border border-white/10">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="text-yellow-400"
+                  >
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                  <span class="font-bold">{anime.score} Rating</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div class="mt-8 grid grid-cols-2 gap-4">
+            {anime.episodeList && anime.episodeList.length > 0 && (
+              <a
+                href={anime.episodeList[0].href}
+                class="col-span-2 bg-gradient-to-r from-cyan-500 to-purple-600 hover:opacity-90 py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all active:scale-95"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                WATCH NOW
+              </a>
+            )}
+            <button class="bg-white/5 hover:bg-white/10 py-3 rounded-xl font-medium border border-white/10 flex items-center justify-center gap-2 transition-all">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Watchlist
+            </button>
+            <button class="bg-white/5 hover:bg-white/10 py-3 rounded-xl font-medium border border-white/10 flex items-center justify-center gap-2 transition-all">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="18" cy="5" r="3" />
+                <circle cx="6" cy="12" r="3" />
+                <circle cx="18" cy="19" r="3" />
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+              </svg>
+              Share
+            </button>
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <div class="w-full flex flex-col gap-8">
+          {/* Title and Genres */}
+          <div class="space-y-4">
+            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight leading-none">
+              {anime.title.split(":").length > 1 ? (
+                <>
+                  {anime.title.split(":")[0]}:<br />
+                  <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
+                    {anime.title.split(":").slice(1).join(":")}
+                  </span>
+                </>
+              ) : (
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">
+                  {anime.title}
+                </span>
+              )}
+            </h1>
+            <div class="flex flex-wrap items-center gap-4 text-sm font-medium">
+              {anime.genreList?.map((g, idx) => (
+                <a
+                  href={g.href}
+                  class={`px-3 py-1 rounded border ${getGenreColor(idx)}`}
+                >
+                  {g.title}
+                </a>
+              ))}
+              {anime.episodes > 0 && (
+                <>
+                  <div class="w-1 h-1 rounded-full bg-gray-600" />
+                  <span>{anime.episodes} Episodes</span>
+                </>
+              )}
+              {anime.status && (
+                <>
+                  <div class="w-1 h-1 rounded-full bg-gray-600" />
+                  <span>{anime.status}</span>
+                </>
+              )}
+              {anime.aired && (
+                <>
+                  <div class="w-1 h-1 rounded-full bg-gray-600" />
+                  <span>{anime.aired.split(" ").pop() || anime.aired}</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Synopsis */}
+          {anime.synopsis?.paragraphs?.length > 0 && (
+            <div class="space-y-4">
+              <h3 class="text-xl font-bold text-gray-200">Synopsis</h3>
+              <div class="text-gray-400 leading-relaxed text-lg space-y-3">
+                {anime.synopsis.paragraphs.map((p) => (
+                  <p>{p}</p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Details Grid */}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-8 py-6 border-y border-white/10">
+            {anime.studios && (
+              <div class="space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500">
+                  Studio
+                </h4>
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="text-purple-400"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <line x1="3" y1="9" x2="21" y2="9" />
+                      <line x1="9" y1="21" x2="9" y2="9" />
+                    </svg>
+                  </div>
+                  <span class="font-medium">{anime.studios}</span>
+                </div>
+              </div>
+            )}
+            {anime.producers && (
+              <div class="space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500">
+                  Producer
+                </h4>
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="text-cyan-400"
+                    >
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </div>
+                  <span class="font-medium">{anime.producers}</span>
+                </div>
+              </div>
+            )}
+            {anime.duration && (
+              <div class="space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500">
+                  Duration
+                </h4>
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="text-pink-400"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                  </div>
+                  <span class="font-medium">{anime.duration}</span>
+                </div>
+              </div>
+            )}
+            {anime.aired && (
+              <div class="space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-widest text-gray-500">
+                  Aired
+                </h4>
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="text-cyan-400"
+                    >
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
+                  </div>
+                  <span class="font-medium">{anime.aired}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Episodes Section */}
+      {anime.episodeList?.length > 0 && (
+        <section class="mt-24">
+          <div class="flex items-center gap-4 mb-8">
+            <h2 class="text-3xl font-bold">Episodes</h2>
+            <span class="px-3 py-1 bg-cyan-500/10 text-cyan-400 rounded-full text-xs font-bold border border-cyan-500/20">
+              {anime.episodeList.length} TOTAL
+            </span>
+          </div>
+          <div class="flex gap-4 overflow-x-auto pb-6 custom-scrollbar snap-x">
+            {anime.episodeList.map((ep, idx) => (
+              <a
+                href={ep.href}
+                class="flex-shrink-0 flex gap-4 p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-white/20 transition-all cursor-pointer w-[340px] snap-start group"
+              >
+                <div class="relative w-[120px] aspect-video rounded-lg overflow-hidden shrink-0 bg-[#1a1a24]">
+                  <img
+                    src={anime.poster}
+                    alt={`Episode ${ep.title}`}
+                    class="w-full h-full object-cover"
+                  />
+                  <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="text-white"
+                    >
+                      <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="flex flex-col justify-center min-w-0">
+                  <span class="text-[10px] font-bold text-gray-500 uppercase">
+                    Episode {ep.title}
+                  </span>
+                  <h4 class="font-bold text-sm text-white truncate group-hover:text-cyan-400 transition-colors">
+                    Episode {ep.title}
+                  </h4>
+                  {anime.duration && (
+                    <span class="text-[10px] text-gray-500 mt-1">
+                      {anime.duration}
+                    </span>
+                  )}
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Recommendations Section */}
+      {anime.recommendedAnimeList?.length > 0 && (
+        <section class="mt-32">
+          <div class="flex items-center justify-between mb-8">
+            <h2 class="text-3xl font-bold">You Might Also Like</h2>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+            {anime.recommendedAnimeList.map((rec) => (
+              <div class="card-hover group cursor-pointer">
+                <a href={rec.href} class="block">
+                  <div class="relative aspect-[3/4] rounded-xl overflow-hidden mb-3">
+                    <img
+                      src={rec.poster}
+                      alt={rec.title}
+                      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                    {anime.score && (
+                      <div class="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold border border-white/10">
+                        {anime.score}
+                      </div>
+                    )}
+                  </div>
+                  <h4 class="font-bold text-sm truncate">{rec.title}</h4>
+                  <p class="text-xs text-gray-500 uppercase font-medium">
+                    Anime
+                  </p>
+                </a>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </main>
+  )
+}

@@ -3,8 +3,7 @@ import "@/styles/global.css";
 
 import Header from "@/components/streaming/Header.astro";
 
-import { AnimeDetailPage } from "@/components/streaming/AnimeDetailPage";
-
+import AnimeDetailPage from "@/components/streaming/AnimeDetailPage.astro";
 import { fetchAnimeDetail } from "@/lib/FetchAnime";
 
 export const prerender = false;
@@ -44,11 +43,7 @@ const description = initialAnime?.synopsis?.paragraphs?.[0] ?? title;
     <Header />
 
     <main class="pt-16">
-      <AnimeDetailPage
-        client:load
-        animeId={animeId}
-        initialData={initialAnime}
-      />
+      <AnimeDetailPage animeId={animeId} initialData={initialAnime} />
     </main>
 
     <footer class="border-t border-white/[0.08] py-8">

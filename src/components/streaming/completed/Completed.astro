@@ -1,0 +1,70 @@
+---
+import Card from "@/components/ui/Card.astro";
+
+export interface Props {
+  completedList?: CompletedAnime[];
+}
+
+const { completedList = [] } = Astro.props;
+---
+
+{
+  completedList?.length > 0 && (
+    <section>
+      <div class="flex items-center justify-between mb-8">
+        <h2 class="text-2xl font-bold flex items-center gap-3 text-white">
+          <span class="w-1.5 h-8 bg-purple-500 rounded-full" />
+          Popular Now
+        </h2>
+        <div class="flex gap-4">
+          <button
+            type="button"
+            class="text-sm font-bold px-4 py-2 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-all"
+          >
+            Anime
+          </button>
+          <button
+            type="button"
+            class="text-sm font-bold px-4 py-2 rounded-lg bg-white/5 text-gray-400 hover:text-white transition-all"
+          >
+            Films
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+        {completedList.map((item: CompletedAnime) => (
+          <a href={item.href} class="group cursor-pointer block">
+            <Card variant="poster" hover noPadding>
+              <div slot="media" class="relative">
+                <img
+                  src={item.poster}
+                  alt={item.title}
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <div class="absolute top-3 right-3">
+                  <span class="bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold border border-white/10">
+                    HD
+                  </span>
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-gradient-to-t from-black via-black/80 to-transparent">
+                  <p class="text-xs text-cyan-400 font-bold mb-1">
+                    Anime · {item.score && `${item.score} ★`}
+                  </p>
+                  <span class="inline-block w-full py-2 bg-white text-black text-xs font-bold rounded-lg text-center">
+                    Details
+                  </span>
+                </div>
+              </div>
+              <h3 class="font-bold text-sm truncate group-hover:text-cyan-400 transition-colors text-white">
+                {item.title}
+              </h3>
+              <p class="text-xs text-gray-500">{item.episodes} Episodes</p>
+            </Card>
+          </a>
+        ))}
+      </div>
+    </section>
+  )
+}

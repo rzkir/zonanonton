@@ -61,48 +61,6 @@ export async function fetchHomeData(opts?: ApiEnv | string): Promise<HomeData> {
     return result;
 }
 
-// --- Anime Detail ---
-
-export interface GenreItem {
-    title: string;
-    genreId: string;
-    href: string;
-    otakudesuUrl: string;
-}
-
-export interface EpisodeItem {
-    title: number;
-    episodeId: string;
-    href: string;
-    otakudesuUrl: string;
-}
-
-export interface RecommendedAnime {
-    title: string;
-    poster: string;
-    animeId: string;
-    href: string;
-    otakudesuUrl: string;
-}
-
-export interface AnimeDetailData {
-    title: string;
-    poster: string;
-    japanese: string;
-    score: string;
-    producers: string;
-    status: string;
-    episodes: number;
-    duration: string;
-    aired: string;
-    studios: string;
-    batch: string | null;
-    synopsis: { paragraphs: string[]; connections: unknown[] };
-    genreList: GenreItem[];
-    episodeList: EpisodeItem[];
-    recommendedAnimeList: RecommendedAnime[];
-}
-
 export async function fetchAnimeDetail(
     animeId: string,
     opts?: ApiEnv | string
@@ -205,4 +163,47 @@ export async function fetchEpisodeDetail(
     } catch {
         return null;
     }
+}
+
+// --- Schedule ---
+
+export interface ScheduleAnimeItem {
+    title: string;
+    animeId: string;
+    href: string;
+    otakudesuUrl: string;
+}
+
+export interface ScheduleDay {
+    day: string;
+    animeList: ScheduleAnimeItem[];
+}
+
+export interface ScheduleData {
+    days: ScheduleDay[];
+}
+
+export async function fetchSchedule(opts?: ApiEnv | string): Promise<ScheduleData> {
+    const apiBase = (typeof opts === 'object' && opts?.apiBase) ?? API_BASE;
+    const secret = (typeof opts === 'object' ? opts?.apiSecret : opts) ?? (typeof import.meta !== 'undefined' && import.meta.env?.API_SECRET) ?? DEFAULT_API_SECRET;
+    const result: ScheduleData = { days: [] };
+
+    try {
+        const res = await fetch(`${apiBase}/schedule`, {
+            headers: {
+                'X-API-Key': secret,
+                'Content-Type': 'application/json',
+            },
+        });
+        if (!res.ok) return result;
+
+        const json = await res.json();
+        if (!json?.ok || !json?.data?.days) return result;
+
+        result.days = json.data.days as ScheduleDay[];
+    } catch {
+        // Fallback: return empty days
+    }
+
+    return result;
 }

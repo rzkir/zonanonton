@@ -1,54 +1,117 @@
 ---
 const currentPath = Astro.url.pathname;
 const navItems = [
-  { href: '/', label: 'Home' },
-  { href: '/?cat=anime', label: 'Anime' },
-  { href: '/?cat=drama', label: 'Drama' },
-  { href: '/?cat=film', label: 'Film' },
+  { href: "/", label: "Anime" },
+  { href: "/?cat=manga", label: "Manga" },
+  { href: "/?cat=drama", label: "Drama" },
+  { href: "/?cat=film", label: "Films" },
+  { href: "/?cat=new", label: "New & Popular" },
 ];
 ---
 
-<header class="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-xl border-b border-white/[0.08]">
-  <div class="max-w-[1600px] mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
-    <a href="/" class="flex items-center gap-2 text-xl font-bold text-white tracking-tight">
-      <span class="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center text-white text-sm font-black">S</span>
-      StreamHub
-    </a>
-
-    <nav class="hidden md:flex items-center gap-1">
-      {navItems.map((item) => (
-        <a
-          href={item.href}
-          class:list={[
-            'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
-            currentPath === item.href
-              ? 'bg-white/10 text-white'
-              : 'text-zinc-400 hover:text-white hover:bg-white/5'
-          ]}
+<nav class="fixed top-0 left-0 right-0 z-50 glass-nav">
+  <div
+    class="max-w-[1440px] mx-auto px-6 h-20 flex items-center justify-between"
+  >
+    <div class="flex items-center gap-10">
+      <a href="/" class="flex items-center gap-2 group">
+        <div
+          class="w-10 h-10 bg-gradient-to-tr from-cyan-500 to-purple-600 rounded-lg flex items-center justify-center"
         >
-          {item.label}
-        </a>
-      ))}
-    </nav>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            class="text-white"
+          >
+            <path d="M12 2v4m0 12v4M2 12h4m12 0h4"></path>
+            <circle cx="12" cy="12" r="4"></circle>
+            <path
+              d="m4.93 4.93 2.83 2.83m8.48 8.48 2.83 2.83M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"
+            ></path>
+          </svg>
+        </div>
+        <span class="text-2xl font-bold tracking-tighter text-white"
+          >NEBULA</span
+        >
+      </a>
 
-    <div class="flex items-center gap-3">
+      <div
+        class="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-400"
+      >
+        {
+          navItems.map((item) => (
+            <a
+              href={item.href}
+              class:list={[
+                "hover:text-white transition-colors",
+                currentPath === item.href ? "text-white" : "",
+              ]}
+            >
+              {item.label}
+            </a>
+          ))
+        }
+      </div>
+    </div>
+
+    <div class="flex items-center gap-6">
+      <div class="relative hidden md:block">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+        >
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.3-4.3"></path>
+        </svg>
+        <input
+          type="text"
+          placeholder="Search titles, genres..."
+          class="bg-white/5 border border-white/10 rounded-full py-2 pl-10 pr-4 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all text-white placeholder-gray-500"
+        />
+      </div>
       <button
         type="button"
-        class="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
-        aria-label="Search"
+        class="text-2xl text-gray-400 hover:text-white transition-colors p-1"
+        aria-label="Notifications"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="m21 21-4.3-4.3"/>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
         </svg>
       </button>
       <a
         href="#"
-        class="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-sm font-medium text-white transition-colors"
+        class="w-10 h-10 rounded-full border-2 border-white/10 overflow-hidden cursor-pointer hover:border-cyan-500/50 transition-colors flex-shrink-0"
       >
-        <span class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center text-xs font-bold">U</span>
-        <span class="hidden sm:inline">Profile</span>
+        <img
+          src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
+          alt="User Avatar"
+          class="w-full h-full object-cover"
+          width="40"
+          height="40"
+        />
       </a>
     </div>
   </div>
-</header>
+</nav>

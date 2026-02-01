@@ -3,8 +3,7 @@ import "@/styles/global.css";
 
 import Header from "@/components/streaming/Header.astro";
 
-import { EpisodeDetailPage } from "@/components/streaming/EpisodeDetailPage";
-
+import EpisodeDetailPage from "@/components/streaming/EpisodeDetailPage.astro";
 import { fetchEpisodeDetail } from "@/lib/FetchAnime";
 
 export const prerender = false;
@@ -40,9 +39,10 @@ const title = initialEpisode?.title ?? "Episode";
 
     <main class="pt-16">
       <EpisodeDetailPage
-        client:load
         episodeId={episodeId}
         initialData={initialEpisode}
+        apiBase={apiBase}
+        apiSecret={apiSecret}
       />
     </main>
 

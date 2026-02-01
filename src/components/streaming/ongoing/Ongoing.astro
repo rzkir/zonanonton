@@ -1,0 +1,65 @@
+---
+export interface Props {
+  ongoingList?: OngoingAnime[];
+}
+
+const { ongoingList = [] } = Astro.props;
+---
+
+{
+  ongoingList?.length > 0 && (
+    <section>
+      <div class="flex items-center justify-between mb-8">
+        <h2 class="text-2xl font-bold flex items-center gap-3 text-white">
+          <span class="w-1.5 h-8 bg-cyan-500 rounded-full" />
+          Ongoing Anime
+        </h2>
+        <a
+          href="#"
+          class="text-gray-400 hover:text-cyan-400 text-sm font-medium transition-colors"
+        >
+          View All
+        </a>
+      </div>
+
+      <div class="flex gap-6 overflow-x-auto hide-scrollbar">
+        {ongoingList.map((item: OngoingAnime) => (
+          <a href={item.href} class="flex-none w-[320px] group cursor-pointer">
+            <div class="relative aspect-video rounded-xl overflow-hidden mb-3 border border-white/5">
+              <img
+                src={item.poster}
+                alt={item.title}
+                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                loading="lazy"
+              />
+              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span class="flex items-center justify-center w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm border border-white/30">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    class="text-white ml-0.5"
+                  >
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                </span>
+              </div>
+            </div>
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="font-bold text-gray-100 group-hover:text-cyan-400 transition-colors">
+                  {item.title}
+                </h3>
+                <p class="text-xs text-gray-500 uppercase tracking-wider">
+                  {item.episodes} eps · {item.latestReleaseDate}
+                </p>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )
+}

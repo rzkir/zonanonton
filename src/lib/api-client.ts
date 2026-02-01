@@ -3,7 +3,11 @@
  * Untuk build/deploy: set PUBLIC_API_BASE dan PUBLIC_API_SECRET di Cloudflare Pages (Environment variables).
  */
 
-import type { AnimeDetailData, EpisodeDetailData } from "@/lib/FetchAnime";
+import type {
+  AnimeDetailData,
+  EpisodeDetailData,
+  ScheduleData,
+} from "@/lib/FetchAnime";
 
 // Di browser hanya PUBLIC_* yang tersedia (Vite/Astro)
 const getBase = () =>
@@ -88,4 +92,13 @@ export async function fetchServerUrlClient(serverIdOrPath: string): Promise<stri
   const id = serverIdOrPath.replace(/^.*\/server\//i, '').replace(/\/$/, '') || serverIdOrPath;
   const { ok, data } = await clientFetch<{ url: string }>(`/server/${id}`);
   return ok && data?.url ? data.url : null;
+}
+
+/** Fetch schedule (days + anime per day). */
+export async function fetchScheduleClient(): Promise<ScheduleData> {
+  const { ok, data } = await clientFetch<ScheduleData>("/schedule");
+  const result: ScheduleData = { days: [] };
+  if (!ok || !data?.days) return result;
+  result.days = data.days;
+  return result;
 }
