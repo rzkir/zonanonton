@@ -64,6 +64,32 @@ h3 {
   box-shadow: 0 0 15px rgba(34, 211, 238, 0.4);
 }
 
+.poster-shadow {
+  box-shadow: 0 0 50px rgba(34, 211, 238, 0.15);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(34, 211, 238, 0.2);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 211, 238, 0.5);
+}
+
+.active-episode-glow {
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.3);
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);

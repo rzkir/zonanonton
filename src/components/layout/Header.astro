@@ -1,12 +1,20 @@
 ---
 const currentPath = Astro.url.pathname;
+
 const navItems = [
-  { href: "/", label: "Anime" },
-  { href: "/?cat=manga", label: "Manga" },
-  { href: "/?cat=drama", label: "Drama" },
-  { href: "/?cat=film", label: "Films" },
-  { href: "/?cat=new", label: "New & Popular" },
+  { href: "/", label: "Home" },
+  { href: "/anime", label: "Anime" },
+  { href: "/manga", label: "Manga" },
+  { href: "/drama", label: "Drama" },
+  { href: "/film", label: "Films" },
+  { href: "/news", label: "News" },
 ];
+
+function isActive(href: string, index: number) {
+  if (href === "/manga") return currentPath.startsWith("/manga");
+  if (href === "/") return currentPath === "/" && index === 0;
+  return currentPath === href;
+}
 ---
 
 <nav class="fixed top-0 left-0 right-0 z-50 glass-nav">
@@ -14,9 +22,12 @@ const navItems = [
     class="max-w-[1440px] mx-auto px-6 h-20 flex items-center justify-between"
   >
     <div class="flex items-center gap-10">
-      <a href="/" class="flex items-center gap-2 group">
+      <a
+        href="/"
+        class="flex items-center gap-2 group text-2xl font-bold tracking-tight"
+      >
         <div
-          class="w-10 h-10 bg-gradient-to-tr from-cyan-500 to-purple-600 rounded-lg flex items-center justify-center"
+          class="w-10 h-10 bg-linear-to-tr from-cyan-500 to-purple-600 rounded-lg flex items-center justify-center"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -37,8 +48,9 @@ const navItems = [
             ></path>
           </svg>
         </div>
-        <span class="text-2xl font-bold tracking-tighter text-white"
-          >NEBULA</span
+        <span
+          class="bg-clip-text text-transparent bg-linear-to-r from-white to-gray-400"
+          >ZONA NONTON</span
         >
       </a>
 
@@ -46,12 +58,14 @@ const navItems = [
         class="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-400"
       >
         {
-          navItems.map((item) => (
+          navItems.map((item, i) => (
             <a
               href={item.href}
               class:list={[
-                "hover:text-white transition-colors",
-                currentPath === item.href ? "text-white" : "",
+                "transition-colors",
+                isActive(item.href, i)
+                  ? "text-cyan-400 border-b-2 border-cyan-400 pb-7 -mb-7"
+                  : "text-gray-400 hover:text-cyan-400",
               ]}
             >
               {item.label}
@@ -102,7 +116,7 @@ const navItems = [
       </button>
       <a
         href="#"
-        class="w-10 h-10 rounded-full border-2 border-white/10 overflow-hidden cursor-pointer hover:border-cyan-500/50 transition-colors flex-shrink-0"
+        class="w-10 h-10 rounded-full border-2 border-white/10 overflow-hidden cursor-pointer hover:border-cyan-500/50 transition-colors shrink-0"
       >
         <img
           src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"

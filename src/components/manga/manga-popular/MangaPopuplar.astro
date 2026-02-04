@@ -1,0 +1,57 @@
+---
+export interface Props {
+  mangaList: (MangaPopularItem | MangaPopularItemWithViews)[];
+}
+
+const { mangaList } = Astro.props;
+const list = mangaList ?? [];
+---
+
+{
+  list.length > 0 && (
+    <section class="flex flex-col gap-4 space-y-32">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold flex items-center gap-3 text-white">
+          <span class="w-1.5 h-8 bg-blue-500 rounded-full" />
+          Manga Populer
+        </h2>
+        <a
+          href="/manga"
+          class="text-gray-400 hover:text-cyan-400 text-sm font-medium transition-colors"
+        >
+          Lihat Semua
+        </a>
+      </div>
+      <div class="flex gap-6 py-4 overflow-x-auto hide-scrollbar">
+        {list.map((item: MangaPopularItem | MangaPopularItemWithViews) => (
+          <a
+            href={`/manga/${item.mangaId}`}
+            class="flex-none w-[200px] group cursor-pointer"
+          >
+            <div class="relative aspect-2/3 rounded-xl overflow-hidden mb-3 card-hover transition-all duration-300 border border-white/5">
+              <img
+                src={item.poster}
+                alt={item.title}
+                class="w-full h-full object-cover"
+                loading="lazy"
+              />
+              <div class="absolute inset-0 bg-linear-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                <span class="text-[10px] text-blue-400 font-bold uppercase">
+                  {item.type}
+                </span>
+                <p class="text-xs text-white font-medium">
+                  {item.latestChapter}
+                  {"views" in item && item.views ? ` · ${item.views}` : ""}
+                </p>
+              </div>
+            </div>
+            <h3 class="font-bold text-sm group-hover:text-cyan-400 transition-colors text-white line-clamp-2">
+              {item.title}
+            </h3>
+            <p class="text-xs text-gray-500">{item.latestChapter}</p>
+          </a>
+        ))}
+      </div>
+    </section>
+  )
+}

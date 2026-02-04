@@ -11,7 +11,7 @@ const defaultHero: HeroData = {
     type: 'anime',
     year: '',
     rating: '',
-    href: '#',
+    animeId: '',
 };
 
 export async function fetchHomeData(opts?: ApiEnv | string): Promise<HomeData> {
@@ -21,10 +21,11 @@ export async function fetchHomeData(opts?: ApiEnv | string): Promise<HomeData> {
         ongoingList: [],
         completedList: [],
         hero: { ...defaultHero },
+        heroes: [],
     };
 
     try {
-        const res = await fetch(`${apiBase}/home`, {
+        const res = await fetch(`${apiBase}/otakudesu/home`, {
             headers: {
                 'X-API-Key': secret,
                 'Content-Type': 'application/json',
@@ -37,25 +38,50 @@ export async function fetchHomeData(opts?: ApiEnv | string): Promise<HomeData> {
 
         const { ongoing, completed } = json.data;
 
+        const toHero = (item: { title: string; poster: string; episodes: number; latestReleaseDate?: string; releaseDay?: string; animeId?: string }) => ({
+            title: item.title,
+            description: `${item.episodes} episode · Terbaru ${item.latestReleaseDate ?? ''} (${item.releaseDay ?? ''})`,
+            image: item.poster,
+            type: 'anime' as const,
+            year: item.latestReleaseDate ?? '',
+            rating: '',
+            animeId: item.animeId ?? '',
+        });
+
         if (ongoing?.animeList?.length) {
             result.ongoingList = ongoing.animeList;
             const first = ongoing.animeList[0];
-            result.hero = {
-                title: first.title,
-                description: `${first.episodes} episode · Terbaru ${first.latestReleaseDate} (${first.releaseDay})`,
-                image: first.poster,
-                type: 'anime',
-                year: first.latestReleaseDate,
-                rating: '',
-                href: first.href ?? '#',
-            };
+            result.hero = toHero(first);
         }
 
         if (completed?.animeList?.length) {
             result.completedList = completed.animeList;
         }
+
+        // Build up to 3 heroes for carousel: from ongoing first, then completed
+        const heroes: HeroData[] = [];
+        if (result.ongoingList?.length) {
+            for (let i = 0; i < Math.min(3, result.ongoingList.length); i++) {
+                heroes.push(toHero(result.ongoingList[i]));
+            }
+        }
+        let completedIdx = 0;
+        while (heroes.length < 3 && result.completedList?.length && completedIdx < result.completedList.length) {
+            const c = result.completedList[completedIdx++];
+            heroes.push({
+                title: c.title,
+                description: `${c.episodes} episode · Score ${c.score}`,
+                image: c.poster,
+                type: 'anime',
+                year: c.lastReleaseDate ?? '',
+                rating: c.score,
+                animeId: c.animeId ?? '',
+            });
+        }
+        result.heroes = heroes.length ? heroes : [result.hero];
     } catch {
         // Fallback: return default hero and empty lists
+        result.heroes = [result.hero];
     }
 
     return result;
@@ -69,7 +95,7 @@ export async function fetchAnimeDetail(
     const secret = (typeof opts === 'object' ? opts?.apiSecret : opts) ?? (typeof import.meta !== 'undefined' && import.meta.env?.API_SECRET) ?? DEFAULT_API_SECRET;
 
     try {
-        const res = await fetch(`${apiBase}/anime/${animeId}`, {
+        const res = await fetch(`${apiBase}/otakudesu/anime/${animeId}`, {
             headers: {
                 'X-API-Key': secret,
                 'Content-Type': 'application/json',
@@ -91,14 +117,12 @@ export async function fetchAnimeDetail(
 export interface EpisodeNavItem {
     title: string;
     episodeId: string;
-    href: string;
     otakudesuUrl: string;
 }
 
 export interface ServerItem {
     title: string;
     serverId: string;
-    href: string;
 }
 
 export interface QualityServer {
@@ -148,7 +172,7 @@ export async function fetchEpisodeDetail(
     const secret = (typeof opts === 'object' ? opts?.apiSecret : opts) ?? (typeof import.meta !== 'undefined' && import.meta.env?.API_SECRET) ?? DEFAULT_API_SECRET;
 
     try {
-        const res = await fetch(`${apiBase}/episode/${episodeId}`, {
+        const res = await fetch(`${apiBase}/otakudesu/episode/${episodeId}`, {
             headers: {
                 'X-API-Key': secret,
                 'Content-Type': 'application/json',
@@ -170,7 +194,6 @@ export async function fetchEpisodeDetail(
 export interface ScheduleAnimeItem {
     title: string;
     animeId: string;
-    href: string;
     otakudesuUrl: string;
 }
 
@@ -189,7 +212,7 @@ export async function fetchSchedule(opts?: ApiEnv | string): Promise<ScheduleDat
     const result: ScheduleData = { days: [] };
 
     try {
-        const res = await fetch(`${apiBase}/schedule`, {
+        const res = await fetch(`${apiBase}/otakudesu/schedule`, {
             headers: {
                 'X-API-Key': secret,
                 'Content-Type': 'application/json',

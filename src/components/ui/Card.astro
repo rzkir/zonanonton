@@ -1,40 +1,9 @@
 ---
-/**
- * Card – komponen kartu reusable untuk berbagai layout.
- *
- * Penggunaan:
- *
- * 1) Kartu poster (gambar 2/3 + konten):
- *    <Card variant="poster" hover>
- *      <img slot="media" src="..." alt="..." class="w-full h-full object-cover" />
- *      <h3 class="font-bold text-white">Judul</h3>
- *      <p class="text-xs text-gray-500">Subtitle</p>
- *    </Card>
- *
- * 2) Kartu video (gambar 16/9 + konten):
- *    <Card variant="video" hover>
- *      <div slot="media">...</div>
- *      <slot />
- *    </Card>
- *
- * 3) Kartu biasa (hanya konten):
- *    <Card>Konten di sini</Card>
- *
- * 4) Kartu compact (padding kecil):
- *    <Card variant="compact">Konten</Card>
- *
- * Slots: media (optional), header (optional), default, footer (optional).
- */
 export interface Props {
-  /** Tambahan class untuk root element */
   class?: string;
-  /** Variant tampilan: default, poster (2/3), video (16/9), compact */
   variant?: "default" | "poster" | "video" | "compact";
-  /** Efek hover lift (card-hover) */
   hover?: boolean;
-  /** Hilangkan padding pada area content */
   noPadding?: boolean;
-  /** Tag root: div atau article */
   as?: "div" | "article";
 }
 

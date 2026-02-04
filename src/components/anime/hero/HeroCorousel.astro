@@ -1,0 +1,11 @@
+---
+import HeroCarouselClient from "./HeroCarouselClient";
+
+export interface Props {
+  heroesList: HeroData[];
+}
+
+const { heroesList } = Astro.props;
+---
+
+<HeroCarouselClient heroesList={heroesList} client:load />

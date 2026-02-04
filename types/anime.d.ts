@@ -5,7 +5,6 @@ interface OngoingAnime {
     releaseDay: string;
     latestReleaseDate: string;
     animeId: string;
-    href: string;
 }
 
 interface CompletedAnime {
@@ -15,7 +14,6 @@ interface CompletedAnime {
     score: string;
     lastReleaseDate: string;
     animeId: string;
-    href: string;
 }
 
 interface HeroData {
@@ -25,13 +23,15 @@ interface HeroData {
     type: 'anime';
     year: string;
     rating: string;
-    href: string;
+    animeId: string;
 }
 
 interface HomeData {
     ongoingList: OngoingAnime[];
     completedList: CompletedAnime[];
     hero: HeroData;
+    /** Up to 3 heroes for carousel (derived from ongoing + completed). */
+    heroes?: HeroData[];
 }
 
 interface Props {
@@ -42,21 +42,17 @@ interface Props {
     recommendedAnimeList?: RecommendedAnime[];
 }
 
-
-
 // --- Anime Detail ---
 
 interface GenreItem {
     title: string;
     genreId: string;
-    href: string;
     otakudesuUrl: string;
 }
 
 interface EpisodeItem {
     title: number;
     episodeId: string;
-    href: string;
     otakudesuUrl: string;
 }
 
@@ -64,7 +60,6 @@ interface RecommendedAnime {
     title: string;
     poster: string;
     animeId: string;
-    href: string;
     otakudesuUrl: string;
 }
 

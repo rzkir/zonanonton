@@ -8,23 +8,26 @@ const { ongoingList = [] } = Astro.props;
 
 {
   ongoingList?.length > 0 && (
-    <section>
-      <div class="flex items-center justify-between mb-8">
+    <section class="flex flex-col gap-4 space-y-32">
+      <div class="flex items-center justify-between mb-4">
         <h2 class="text-2xl font-bold flex items-center gap-3 text-white">
           <span class="w-1.5 h-8 bg-cyan-500 rounded-full" />
-          Ongoing Anime
+          Terbaru
         </h2>
         <a
-          href="#"
+          href="/anime/ongoing"
           class="text-gray-400 hover:text-cyan-400 text-sm font-medium transition-colors"
         >
-          View All
+          Lihat Semua
         </a>
       </div>
 
       <div class="flex gap-6 overflow-x-auto hide-scrollbar">
         {ongoingList.map((item: OngoingAnime) => (
-          <a href={item.href} class="flex-none w-[320px] group cursor-pointer">
+          <a
+            href={`/anime/${item.animeId}`}
+            class="flex-none w-[320px] group cursor-pointer"
+          >
             <div class="relative aspect-video rounded-xl overflow-hidden mb-3 border border-white/5">
               <img
                 src={item.poster}

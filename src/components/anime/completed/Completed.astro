@@ -1,0 +1,60 @@
+---
+import Card from "@/components/ui/Card.astro";
+
+export interface Props {
+  completedList?: CompletedAnime[];
+}
+
+const { completedList = [] } = Astro.props;
+---
+
+{
+  completedList?.length > 0 && (
+    <section class="flex flex-col gap-4 space-y-32">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold flex items-center gap-3 text-white">
+          <span class="w-1.5 h-8 bg-purple-500 rounded-full" />
+          Anime Selesai
+        </h2>
+
+        <a
+          href="/anime/completed"
+          class="text-gray-400 hover:text-cyan-400 text-sm font-medium transition-colors"
+        >
+          Lihat Semua
+        </a>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+        {completedList.map((item: CompletedAnime) => (
+          <a href={`/anime/${item.animeId}`} class="group cursor-pointer block">
+            <Card variant="poster" hover noPadding>
+              <div slot="media" class="relative aspect-2/3">
+                <img
+                  src={item.poster}
+                  alt={item.title}
+                  class="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <div class="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 bg-linear-to-t from-black via-black/80 to-transparent">
+                  <h3 class="font-bold text-sm truncate group-hover:text-cyan-400 transition-colors text-white">
+                    {item.title}
+                  </h3>
+
+                  <p class="text-xs text-cyan-400 font-bold mb-1">
+                    Anime · {item.score && `${item.score} ★`} · {item.episodes}{" "}
+                    eps
+                  </p>
+
+                  <span class="inline-block w-full py-2 bg-white text-black text-xs font-bold rounded-lg text-center">
+                    Details
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </a>
+        ))}
+      </div>
+    </section>
+  )
+}

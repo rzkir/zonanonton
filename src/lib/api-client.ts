@@ -4,7 +4,6 @@
  */
 
 import type {
-  AnimeDetailData,
   EpisodeDetailData,
   ScheduleData,
 } from "@/lib/FetchAnime";
@@ -44,14 +43,14 @@ export async function fetchHomeDataClient(): Promise<HomeData> {
     ongoingList: [],
     completedList: [],
     hero: {
-      title: 'StreamHub Anime',
-      description: 'Nonton anime ongoing dan completed dengan subtitle Indonesia.',
+      title: 'Zona Nonton',
+      description: 'Nonton anime, manga, dan film dengan subtitle Indonesia.',
       image:
         'https://otakudesu.best/wp-content/uploads/2025/10/Fumetsu-no-Anata-e-Season-2-Sub.jpg',
       type: 'anime',
       year: '',
       rating: '',
-      href: '#',
+      animeId: '',
     },
   };
   if (!ok || !data) return result;
@@ -66,7 +65,7 @@ export async function fetchHomeDataClient(): Promise<HomeData> {
       type: 'anime',
       year: first.latestReleaseDate,
       rating: '',
-      href: first.href ?? '#',
+      animeId: first.animeId ?? '',
     };
   }
   if (completedList?.length) {
