@@ -1,12 +1,9 @@
-const API_BASE = import.meta.env.PUBLIC_API_BASE;
+import { buildAuthHeaders, type ApiEnv } from "@/lib/api-auth";
+import { fetchEnvironment } from "@/lib/FetchEnvironment";
 
-const DEFAULT_API_SECRET = import.meta.env.PUBLIC_API_SECRET;
-
-export type ApiEnv = { apiBase?: string; apiSecret?: string };
+export type { ApiEnv } from "@/lib/api-auth";
 
 export async function fetchMangaHomeData(opts?: ApiEnv | string): Promise<MangaHomeData> {
-    const apiBase = (typeof opts === 'object' && opts?.apiBase) ?? API_BASE;
-    const secret = (typeof opts === 'object' ? opts?.apiSecret : opts) ?? (typeof import.meta !== 'undefined' && import.meta.env?.API_SECRET) ?? DEFAULT_API_SECRET;
     const result: MangaHomeData = {
         recent: {
             href: '',
@@ -36,38 +33,43 @@ export async function fetchMangaHomeData(opts?: ApiEnv | string): Promise<MangaH
     };
 
     try {
-        const res = await fetch(`${apiBase}/komiku/home`, {
-            headers: {
-                'X-API-Key': secret,
-                'Content-Type': 'application/json',
-            },
+        const environment = await fetchEnvironment();
+        const baseURL = environment.data[0].baseURL;
+        const response = await fetch(`${baseURL}/komiku/home`, {
+            headers: buildAuthHeaders(opts),
         });
-        if (!res.ok) return result;
+        if (!response.ok) return result;
 
-        const json = await res.json();
+        const json = await response.json();
         if (!json?.ok || !json?.data) return result;
 
-        const { recent, komiku_popular, manga_popular, manhua_popular, manhwa_popular } = json.data;
+        const data = json.data as Record<string, unknown>;
 
-        if (recent?.komikuList?.length) {
-            result.recent = recent;
+        type Section = Record<string, unknown> & { komikuList?: unknown[]; mangaList?: unknown[] };
+        const pick = (key: string): Section | null => {
+            const section = data[key] as Record<string, unknown> | undefined;
+            if (!section) return null;
+            const list = section.komikuList ?? section.komiku_list ?? section.mangaList ?? section.manga_list;
+            return Array.isArray(list) && list.length ? { ...section, komikuList: list, mangaList: list } : null;
+        };
+
+        const recentRaw = (data.recent ?? data) as Record<string, unknown> | undefined;
+        const recentList = recentRaw?.komikuList ?? recentRaw?.komiku_list;
+        if (Array.isArray(recentList) && recentList.length && recentRaw) {
+            result.recent = { href: String(recentRaw.href ?? ''), komikuUrl: String(recentRaw.komikuUrl ?? recentRaw.komiku_url ?? ''), komikuList: recentList };
         }
 
-        if (komiku_popular?.mangaList?.length) {
-            result.komiku_popular = komiku_popular;
-        }
+        const komikuPopular = pick("komiku_popular");
+        if (komikuPopular) result.komiku_popular = { href: String(komikuPopular.href ?? ''), komikuUrl: String(komikuPopular.komikuUrl ?? komikuPopular.komiku_url ?? ''), mangaList: (komikuPopular.mangaList ?? komikuPopular.komikuList ?? []) as typeof result.komiku_popular.mangaList };
 
-        if (manga_popular?.mangaList?.length) {
-            result.manga_popular = manga_popular;
-        }
+        const mangaPopular = pick("manga_popular");
+        if (mangaPopular) result.manga_popular = { href: String(mangaPopular.href ?? ''), komikuUrl: String(mangaPopular.komikuUrl ?? mangaPopular.komiku_url ?? ''), mangaList: (mangaPopular.mangaList ?? mangaPopular.komikuList ?? []) as typeof result.manga_popular.mangaList };
 
-        if (manhua_popular?.mangaList?.length) {
-            result.manhua_popular = manhua_popular;
-        }
+        const manhuaPopular = pick("manhua_popular");
+        if (manhuaPopular) result.manhua_popular = { href: String(manhuaPopular.href ?? ''), komikuUrl: String(manhuaPopular.komikuUrl ?? manhuaPopular.komiku_url ?? ''), mangaList: (manhuaPopular.mangaList ?? manhuaPopular.komikuList ?? []) as typeof result.manhua_popular.mangaList };
 
-        if (manhwa_popular?.mangaList?.length) {
-            result.manhwa_popular = manhwa_popular;
-        }
+        const manhwaPopular = pick("manhwa_popular");
+        if (manhwaPopular) result.manhwa_popular = { href: String(manhwaPopular.href ?? ''), komikuUrl: String(manhwaPopular.komikuUrl ?? manhwaPopular.komiku_url ?? ''), mangaList: (manhwaPopular.mangaList ?? manhwaPopular.komikuList ?? []) as typeof result.manhwa_popular.mangaList };
     } catch {
         // Fallback: return empty lists
     }

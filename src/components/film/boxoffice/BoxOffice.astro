@@ -1,0 +1,61 @@
+---
+export interface Props {
+  boxofficeList: FilmBoxOfficeItem[];
+}
+
+const { boxofficeList = [] } = Astro.props;
+---
+
+{
+  boxofficeList?.length > 0 && (
+    <section class="flex flex-col gap-4">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-bold flex items-center gap-3 text-white">
+          <span class="w-1.5 h-8 bg-amber-500 rounded-full" />
+          Box Office
+        </h2>
+      </div>
+      <div class="flex gap-6 py-4 overflow-x-auto hide-scrollbar">
+        {boxofficeList.map((item: FilmBoxOfficeItem) => (
+          <a
+            href={item.href}
+            class="flex-none w-[160px] sm:w-[180px] group cursor-pointer"
+          >
+            <div class="relative aspect-2/3 rounded-xl overflow-hidden mb-3 border border-white/5 transition-all duration-300 group-hover:border-amber-500/40">
+              <img
+                src={item.poster}
+                alt={item.title}
+                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                loading="lazy"
+              />
+              <div class="absolute top-2 left-2 flex gap-1.5">
+                {item.type && (
+                  <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-amber-500/90 text-black">
+                    {item.type}
+                  </span>
+                )}
+                {item.quality && (
+                  <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-white/20 text-white">
+                    {item.quality}
+                  </span>
+                )}
+              </div>
+              {item.score && (
+                <div class="absolute bottom-2 right-2 flex items-center gap-1 rounded bg-black/60 px-2 py-1 text-xs text-amber-400">
+                  <span>★</span>
+                  {item.score}
+                </div>
+              )}
+            </div>
+            <h3 class="font-semibold text-sm text-white line-clamp-2 group-hover:text-amber-300 transition-colors">
+              {item.title}
+            </h3>
+            {item.episode && (
+              <p class="text-xs text-gray-500">Ep {item.episode}</p>
+            )}
+          </a>
+        ))}
+      </div>
+    </section>
+  )
+}

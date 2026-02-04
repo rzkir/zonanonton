@@ -80,3 +80,68 @@ interface AnimeDetailData {
     episodeList: EpisodeItem[];
     recommendedAnimeList: RecommendedAnime[];
 }
+
+interface EpisodeNavItem {
+    title: string;
+    episodeId: string;
+    otakudesuUrl: string;
+}
+
+interface ServerItem {
+    title: string;
+    serverId: string;
+}
+
+interface QualityServer {
+    title: string;
+    serverList: ServerItem[];
+}
+
+interface DownloadLink {
+    title: string;
+    url: string;
+}
+
+interface DownloadQuality {
+    title: string;
+    size: string;
+    urls: DownloadLink[];
+}
+
+interface EpisodeInfo {
+    credit: string;
+    encoder: string;
+    duration: string;
+    type: string;
+    genreList: GenreItem[];
+    episodeList: EpisodeItem[];
+}
+
+interface EpisodeDetailData {
+    title: string;
+    animeId: string;
+    releaseTime: string;
+    defaultStreamingUrl: string;
+    hasPrevEpisode: boolean;
+    prevEpisode: EpisodeNavItem | null;
+    hasNextEpisode: boolean;
+    nextEpisode: EpisodeNavItem | null;
+    server: { qualities: QualityServer[] };
+    downloadUrl: { qualities: DownloadQuality[] };
+    info: EpisodeInfo;
+}
+
+interface ScheduleAnimeItem {
+    title: string;
+    animeId: string;
+    otakudesuUrl: string;
+}
+
+interface ScheduleDay {
+    day: string;
+    animeList: ScheduleAnimeItem[];
+}
+
+interface ScheduleData {
+    days: ScheduleDay[];
+}

@@ -10,17 +10,14 @@ import HomePage from "@/components/streaming/HomePage.astro";
 import { fetchHomeData, fetchSchedule } from "@/lib/FetchAnime";
 
 import { fetchMangaHomeData } from "@/lib/FetchManga";
+import { fetchFilmHomeData } from "@/lib/FetchFIlm";
 
-const apiBase = import.meta.env.API_BASE ?? import.meta.env.PUBLIC_API_BASE;
+const initialHomeData = await fetchHomeData();
 
-const apiSecret =
-  import.meta.env.API_SECRET ?? import.meta.env.PUBLIC_API_SECRET;
+const scheduleData = await fetchSchedule();
 
-const initialHomeData = await fetchHomeData({ apiBase, apiSecret });
-
-const scheduleData = await fetchSchedule({ apiBase, apiSecret });
-
-const initialMangaHomeData = await fetchMangaHomeData({ apiBase, apiSecret });
+const initialMangaHomeData = await fetchMangaHomeData();
+const initialFilmData = await fetchFilmHomeData();
 ---
 
 <html lang="id" class="streaming-app dark">
@@ -46,6 +43,7 @@ const initialMangaHomeData = await fetchMangaHomeData({ apiBase, apiSecret });
       initialData={initialHomeData}
       scheduleData={scheduleData}
       initialMangaHomeData={initialMangaHomeData}
+      initialFilmData={initialFilmData}
     />
     <Footer />
   </body>
