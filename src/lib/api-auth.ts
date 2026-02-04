@@ -4,10 +4,10 @@ const getApiSecret = (opts?: ApiEnv | string): string => {
     const fromOpts = typeof opts === "object" ? opts?.apiSecret : opts;
     if (fromOpts) return fromOpts;
     const env =
-        (typeof import.meta !== "undefined" && import.meta.env?.API_SECRET) ??
-        (typeof import.meta !== "undefined" && import.meta.env?.API_SECRET);
+        (typeof import.meta !== "undefined" && import.meta.env?.PUBLIC_API_SECRET) ??
+        (typeof import.meta !== "undefined" && import.meta.env?.PUBLIC_API_SECRET);
     if (env) return String(env);
-    throw new Error("API_SECRET not configured");
+    throw new Error("PUBLIC_API_SECRET not configured");
 };
 
 export const buildAuthHeaders = (opts?: ApiEnv | string): HeadersInit => {

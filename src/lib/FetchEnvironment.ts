@@ -3,15 +3,15 @@ import { QueryClient, queryOptions } from "@tanstack/react-query";
 export const environmentQueryKey = ["env"] as const;
 
 async function fetchEnvironmentFn(): Promise<EnvironmentResponse> {
-    const envUrl = import.meta.env.API_ENVIRONMENT;
-    const apiSecret = import.meta.env.API_ENVIRONMENT_SECRET;
+    const envUrl = import.meta.env.PUBLIC_API_ENVIRONMENT;
+    const apiSecret = import.meta.env.PUBLIC_API_ENVIRONMENT_SECRET;
 
     if (!envUrl) {
-        throw new Error("API_ENVIRONMENT not configured");
+        throw new Error("PUBLIC_API_ENVIRONMENT not configured");
     }
 
     if (!apiSecret) {
-        throw new Error("API_ENVIRONMENT_SECRET not configured");
+        throw new Error("PUBLIC_API_ENVIRONMENT_SECRET not configured");
     }
 
     const response = await fetch(envUrl, {
