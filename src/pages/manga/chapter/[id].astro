@@ -1,0 +1,537 @@
+---
+import "@/styles/global.css";
+
+import Header from "@/components/layout/Header.astro";
+
+import { fetchMangaChapter, fetchMangaDetail } from "@/lib/FetchManga";
+
+export const prerender = false;
+
+const { id } = Astro.params;
+const chapterId = id ?? "";
+if (!chapterId) return Astro.redirect("/manga");
+
+const apiSecret =
+  import.meta.env.API_SECRET ?? import.meta.env.PUBLIC_API_SECRET;
+const data = await fetchMangaChapter(chapterId, apiSecret);
+if (!data) return Astro.redirect("/manga");
+
+const title = data.title ?? "Chapter";
+const mangaTitle =
+  data.title.replace(/\s*chapter\s*\d+.*$/i, "").trim() || data.title;
+const chapterNum = data.chapterNumber ?? "";
+const images = data.chapterImages ?? [];
+const totalPages = images.length;
+const synopsisParagraphs = data.synopsis?.paragraphs ?? [];
+const recommended = data.recommendedChapters ?? [];
+const backMangaId = recommended[0]?.mangaId ?? "";
+const backUrl = backMangaId ? `/manga/${backMangaId}` : "/manga";
+
+// Ambil daftar chapter untuk prev/next
+let prevChapter: KomikuDetailChapter | null = null;
+let nextChapter: KomikuDetailChapter | null = null;
+let chapterList: KomikuDetailChapter[] = [];
+
+if (backMangaId) {
+  const mangaDetail = await fetchMangaDetail(backMangaId, apiSecret);
+  if (mangaDetail?.chapterList?.length) {
+    chapterList = mangaDetail.chapterList;
+    const currentIndex = chapterList.findIndex(
+      (ch) =>
+        ch.chapterId === chapterId ||
+        String(ch.chapterId) === String(chapterId),
+    );
+    if (currentIndex >= 0) {
+      nextChapter = currentIndex > 0 ? chapterList[currentIndex - 1] : null;
+      prevChapter =
+        currentIndex < chapterList.length - 1 && currentIndex >= 0
+          ? chapterList[currentIndex + 1]
+          : null;
+    }
+  }
+}
+---
+
+<html lang="id" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Zona Nonton - {mangaTitle} Ch. {chapterNum}</title>
+    <meta name="description" content={title} />
+    <link rel="preconnect" href="https://api.fontshare.com" />
+    <script
+      src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"
+      defer></script>
+    <style is:global>
+      .reader-root {
+        --nebula-bg: #0a0b14;
+        --nebula-accent: #22d3ee;
+        --nebula-border: rgba(255, 255, 255, 0.08);
+      }
+      .reader-root body {
+        background-color: var(--nebula-bg);
+        color: #fff;
+        overflow-x: hidden;
+        scroll-behavior: smooth;
+      }
+      .reader-glass {
+        background: rgba(10, 11, 20, 0.75);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--nebula-border);
+      }
+      .reader-glass-no-border {
+        background: rgba(10, 11, 20, 0.75);
+        backdrop-filter: blur(12px);
+      }
+      .manga-page {
+        box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+        transition: transform 0.3s ease;
+      }
+      .reader-scrollbar::-webkit-scrollbar {
+        width: 5px;
+      }
+      .reader-scrollbar::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .reader-scrollbar::-webkit-scrollbar-thumb {
+        background: var(--nebula-accent);
+        border-radius: 10px;
+      }
+      .nav-zone {
+        position: fixed;
+        top: 80px;
+        bottom: 0;
+        width: 15%;
+        z-index: 10;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: auto;
+      }
+      .nav-zone:hover {
+        opacity: 1;
+        background: linear-gradient(
+          to right,
+          rgba(34, 211, 238, 0.05),
+          transparent
+        );
+      }
+      .nav-zone.right:hover {
+        background: linear-gradient(
+          to left,
+          rgba(34, 211, 238, 0.05),
+          transparent
+        );
+      }
+      .sidebar-tab-active {
+        border-bottom: 2px solid var(--nebula-accent);
+        color: var(--nebula-accent);
+      }
+      #reader-progress-bar {
+        transition: width 0.1s ease-out;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen reader-root">
+    <div class="min-h-screen flex flex-col">
+      <Header />
+
+      <!-- Top Sticky Navigation -->
+      <header
+        class="fixed top-0 left-0 right-0 h-16 reader-glass z-50 flex items-center border-b border-white/5 mt-20"
+      >
+        <div class="flex items-center justify-between container mx-auto">
+          <div class="flex items-center gap-4">
+            <a
+              href={backUrl}
+              class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+              aria-label="Kembali"
+            >
+              <iconify-icon icon="lucide:chevron-left" class="text-xl"
+              ></iconify-icon>
+            </a>
+            <div class="flex flex-col min-w-0">
+              <h1
+                class="text-sm md:text-base font-bold truncate max-w-[150px] md:max-w-none"
+              >
+                {mangaTitle}
+              </h1>
+              <span
+                class="text-[10px] text-gray-400 uppercase tracking-wider font-bold"
+                >Chapter {chapterNum}</span
+              >
+            </div>
+          </div>
+
+          <div class="flex items-center gap-6">
+            <div class="hidden md:flex flex-col items-center">
+              <span class="text-xs font-bold text-cyan-400"
+                ><span id="current-page">1</span> / {totalPages}</span
+              >
+              <div
+                class="w-32 h-1 bg-white/10 rounded-full mt-1 overflow-hidden"
+              >
+                <div
+                  id="reader-progress-bar"
+                  class="h-full bg-cyan-400"
+                  style="width: 0%"
+                >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+              aria-label="Pengaturan"
+            >
+              <iconify-icon icon="lucide:settings" class="text-xl"
+              ></iconify-icon>
+            </button>
+            <button
+              type="button"
+              class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+              aria-label="Bookmark"
+            >
+              <iconify-icon icon="lucide:bookmark" class="text-xl"
+              ></iconify-icon>
+            </button>
+            <button
+              type="button"
+              id="btn-fullscreen"
+              class="w-10 h-10 rounded-full flex items-center justify-center bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-all"
+              aria-label="Fullscreen"
+            >
+              <iconify-icon icon="lucide:maximize-2" class="text-xl"
+              ></iconify-icon>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Layout -->
+      <div class="flex-1 flex pt-32 relative">
+        <div
+          class="nav-zone left left-0"
+          id="nav-scroll-top"
+          aria-hidden="true"
+        >
+          <iconify-icon
+            icon="lucide:arrow-up-circle"
+            class="text-4xl text-cyan-400/50"></iconify-icon>
+        </div>
+
+        <div
+          class="nav-zone right right-0"
+          id="nav-scroll-bottom"
+          aria-hidden="true"
+        >
+          <iconify-icon
+            icon="lucide:arrow-down-circle"
+            class="text-4xl text-cyan-400/50"></iconify-icon>
+        </div>
+
+        <!-- Reading Content -->
+        <main
+          id="manga-reader-container"
+          class="flex-1 flex flex-col items-center bg-black/40 overflow-y-auto px-4 py-8 reader-scrollbar"
+        >
+          <div id="page-list" class="w-full max-w-4xl space-y-0">
+            {
+              images.map((img, index) => (
+                <div
+                  class="manga-page-wrapper relative bg-zinc-900 group"
+                  data-page={index + 1}
+                >
+                  <img
+                    src={img.src}
+                    alt={img.alt}
+                    class="w-full object-contain manga-page"
+                    width="800"
+                    height="1200"
+                    loading={index < 3 ? "eager" : "lazy"}
+                    decoding="async"
+                  />
+                  <div class="absolute bottom-4 right-4 bg-black/60 px-3 py-1 rounded text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
+                    HALAMAN {index + 1}
+                  </div>
+                </div>
+              ))
+            }
+
+            <div class="py-12 text-center text-gray-600">
+              <p class="text-xs italic uppercase tracking-widest">
+                Continuous Scrolling Mode
+              </p>
+              <iconify-icon icon="lucide:mouse-pointer-2" class="text-xl mt-2"
+              ></iconify-icon>
+            </div>
+
+            <!-- Next / Recommended -->
+            {
+              (nextChapter || recommended.length > 0) && (
+                <div
+                  id="next-chapter-preview"
+                  class="mt-24 mb-32 w-full reader-glass rounded-2xl overflow-hidden p-1 group"
+                >
+                  <a
+                    href={
+                      nextChapter
+                        ? `/manga/chapter/${nextChapter.chapterId}`
+                        : backMangaId
+                          ? `/manga/${backMangaId}`
+                          : "/manga"
+                    }
+                    class="block"
+                  >
+                    <div class="relative h-64 w-full rounded-xl overflow-hidden">
+                      <img
+                        src={
+                          nextChapter
+                            ? data.poster || recommended[0]?.poster || ""
+                            : recommended[0].poster
+                        }
+                        alt={
+                          nextChapter ? nextChapter.title : recommended[0].title
+                        }
+                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        width="600"
+                        height="256"
+                      />
+                      <div class="absolute inset-0 bg-linear-to-t from-black via-black/40 to-transparent flex flex-col justify-end p-8">
+                        <div class="flex items-center gap-2 mb-2">
+                          <span class="px-3 py-1 bg-cyan-500 text-black text-[10px] font-bold rounded-full uppercase">
+                            {nextChapter ? "Chapter berikutnya" : "Rekomendasi"}
+                          </span>
+                        </div>
+                        <h3 class="text-2xl md:text-3xl font-bold">
+                          {nextChapter
+                            ? nextChapter.title
+                            : recommended[0].title}
+                        </h3>
+                        {!nextChapter && (
+                          <div class="flex items-center gap-4 mt-2 text-sm text-gray-400">
+                            <span class="flex items-center gap-1">
+                              <iconify-icon icon="lucide:image" />{" "}
+                              {recommended[0].updateStatus}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div class="p-6 flex items-center justify-between">
+                      <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-400">
+                          <iconify-icon
+                            icon="lucide:book-open"
+                            class="text-3xl"
+                          />
+                        </div>
+                        <div>
+                          <p class="text-sm text-gray-400">
+                            {nextChapter
+                              ? "Lanjut baca chapter berikutnya"
+                              : "Lihat daftar chapter"}
+                          </p>
+                        </div>
+                      </div>
+                      <span class="px-6 py-3 bg-white text-black font-bold rounded-xl group-hover:bg-cyan-400 transition-colors uppercase text-sm tracking-wider">
+                        Baca
+                      </span>
+                    </div>
+                  </a>
+                </div>
+              )
+            }
+          </div>
+        </main>
+
+        <!-- Right Sidebar -->
+        <aside
+          id="reader-sidebar"
+          class="hidden xl:flex flex-col w-[400px] border-l border-white/5 reader-glass-no-border h-[calc(100vh-9rem)] overflow-hidden"
+        >
+          <div class="flex border-b border-white/5">
+            <button
+              type="button"
+              id="tab-info"
+              class="flex-1 py-4 text-sm font-bold sidebar-tab-active uppercase tracking-widest"
+              >Info</button
+            >
+          </div>
+          <div
+            id="sidebar-content"
+            class="flex-1 overflow-y-auto reader-scrollbar p-6"
+          >
+            <div id="info-section" class="space-y-8">
+              <div>
+                <h4
+                  class="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-3"
+                >
+                  Sinopsis
+                </h4>
+                {
+                  synopsisParagraphs.length > 0 ? (
+                    <div class="space-y-3">
+                      {synopsisParagraphs.map((p) => (
+                        <p class="text-sm text-gray-400 leading-relaxed">{p}</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <p class="text-sm text-gray-500 italic">
+                      Tidak ada sinopsis untuk chapter ini.
+                    </p>
+                  )
+                }
+              </div>
+              {
+                data.readingDirection && (
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white/5 rounded-xl p-3">
+                      <span class="block text-[10px] text-gray-500 uppercase font-bold">
+                        Arah Baca
+                      </span>
+                      <span class="text-sm font-bold">
+                        {data.readingDirection || "—"}
+                      </span>
+                    </div>
+                    <div class="bg-white/5 rounded-xl p-3">
+                      <span class="block text-[10px] text-gray-500 uppercase font-bold">
+                        Halaman
+                      </span>
+                      <span class="text-sm font-bold">{totalPages}</span>
+                    </div>
+                  </div>
+                )
+              }
+              {
+                recommended.length > 1 && (
+                  <div>
+                    <h4 class="text-xs font-bold text-cyan-400 uppercase tracking-widest mb-3">
+                      Rekomendasi
+                    </h4>
+                    <div class="space-y-3">
+                      {recommended.slice(1, 5).map((rec) => (
+                        <a
+                          href={`/manga/${rec.mangaId}`}
+                          class="flex gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors group"
+                        >
+                          <img
+                            src={rec.poster}
+                            alt={rec.title}
+                            class="w-12 h-16 object-cover rounded-lg shrink-0"
+                            width="48"
+                            height="64"
+                            loading="lazy"
+                          />
+                          <div class="min-w-0">
+                            <p class="text-sm font-medium truncate group-hover:text-cyan-400">
+                              {rec.title}
+                            </p>
+                            <p class="text-[10px] text-gray-500">
+                              {rec.updateStatus}
+                            </p>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )
+              }
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- Bottom Floating Navigation -->
+      <div
+        class="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 reader-glass px-4 py-3 rounded-2xl shadow-2xl z-50 border-white/10"
+      >
+        <a
+          href={prevChapter
+            ? `/manga/chapter/${prevChapter.chapterId}`
+            : backUrl}
+          class={`w-12 h-12 rounded-xl flex items-center justify-center bg-white/5 hover:bg-cyan-500 hover:text-black transition-all group ${!prevChapter ? "opacity-60" : ""}`}
+          aria-label={prevChapter ? "Chapter sebelumnya" : "Ke halaman manga"}
+        >
+          <iconify-icon
+            icon="lucide:skip-back"
+            class="text-xl group-hover:scale-110 transition-transform"
+          ></iconify-icon>
+        </a>
+        <a
+          href={backUrl}
+          class="h-12 px-6 rounded-xl bg-white/5 hover:bg-white/10 flex items-center gap-3 transition-colors border border-white/5 min-w-[180px] justify-between"
+        >
+          <div class="text-left">
+            <p
+              class="text-[10px] text-gray-500 font-bold uppercase tracking-widest leading-none"
+            >
+              Chapter
+            </p>
+            <p class="font-bold text-sm leading-tight">
+              Chapter {chapterNum}
+            </p>
+          </div>
+          <iconify-icon icon="lucide:chevron-right" class="text-gray-400"
+          ></iconify-icon>
+        </a>
+        <a
+          href={nextChapter
+            ? `/manga/chapter/${nextChapter.chapterId}`
+            : backUrl}
+          class={`w-12 h-12 rounded-xl flex items-center justify-center bg-cyan-500 text-black hover:bg-cyan-400 transition-all group ${!nextChapter ? "opacity-60" : ""}`}
+          aria-label={nextChapter ? "Chapter berikutnya" : "Ke halaman manga"}
+        >
+          <iconify-icon
+            icon="lucide:skip-forward"
+            class="text-xl group-hover:scale-110 transition-transform"
+          ></iconify-icon>
+        </a>
+      </div>
+
+      <!-- Keyboard Hints -->
+      <div
+        id="keyboard-hints"
+        class="fixed bottom-24 right-8 reader-glass p-6 rounded-2xl border border-white/10 max-w-[280px] pointer-events-none opacity-0 translate-y-4 transition-all z-50"
+      >
+        <div class="flex items-center gap-3 mb-4">
+          <iconify-icon icon="lucide:keyboard" class="text-2xl text-cyan-400"
+          ></iconify-icon>
+          <span class="text-sm font-bold uppercase tracking-wider">Kontrol</span
+          >
+        </div>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-gray-400">Scroll ke bawah</span>
+            <span
+              class="px-2 py-1 bg-white/10 rounded text-[10px] border border-white/10"
+              >Space</span
+            >
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-gray-400">Toggle sidebar</span>
+            <span
+              class="px-2 py-1 bg-white/10 rounded text-[10px] border border-white/10"
+              >Ctrl + M</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      import { initChapterReader } from "@/services/useStateChapter";
+      initChapterReader();
+    </script>
+  </body>
+</html>

@@ -28,6 +28,35 @@ h3 {
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.nebula-gradient-bg {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(34, 211, 238, 0.1) 0%, transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.1) 0%, transparent 40%);
+}
+
+.chapter-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.glow-hover:hover {
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.2);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: slideUp 0.6s ease-out forwards;
+}
+
 .hero-gradient {
   background: linear-gradient(0deg, var(--bg-deep) 0%, rgba(10, 11, 20, 0.4) 50%, rgba(10, 11, 20, 0) 100%);
 }

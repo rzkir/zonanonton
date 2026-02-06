@@ -15,10 +15,7 @@ if (!episodeId) return Astro.redirect("/");
 const apiBase = import.meta.env.API_BASE ?? import.meta.env.PUBLIC_API_BASE;
 const apiSecret =
   import.meta.env.API_SECRET ?? import.meta.env.PUBLIC_API_SECRET;
-const initialEpisode = await fetchEpisodeDetail(episodeId, {
-  apiBase,
-  apiSecret,
-});
+const initialEpisode = await fetchEpisodeDetail(episodeId, { apiSecret });
 const title = initialEpisode?.title ?? "Episode";
 ---
 
