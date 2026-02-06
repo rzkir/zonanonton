@@ -14,11 +14,17 @@ import ManhwaPopular from "@/components/manga/manhwa-popular/ManhwaPopular.astro
 import ManhuaPopular from "@/components/manga/manhua-popular/ManhuaPopular.astro";
 
 import MangaPopular from "@/components/manga/manga-popular/MangaPopuplar.astro";
+
 import FIlmSlider from "@/components/film/slider/FIlmSlider.astro";
+
 import BoxOffice from "@/components/film/boxoffice/BoxOffice.astro";
+
 import SerialTv from "@/components/film/serialtv/SerialTv.astro";
+
 import FilmPopular from "@/components/film/popular/FilmPopular.astro";
+
 import LastMovie from "@/components/film/lastmovie/LastMovie.astro";
+
 import FilmAnime from "@/components/film/anime/FilmAnime.astro";
 
 export interface Props {
@@ -183,6 +189,30 @@ const ongoingListWithoutHeroes = initialData?.ongoingList?.filter((item: Ongoing
 
         <!-- Popular Manhua (Popular Manhua list) -->
         <ManhuaPopular mangaList={initialMangaHomeData?.manhua_popular?.mangaList ?? []} />
+
+        <a
+          href="/film"
+          class="block w-full rounded-xl overflow-hidden border border-white/5 transition-all duration-300 group"
+        >
+          <div class="relative min-h-[140px] sm:min-h-[160px] flex items-center justify-between gap-6 px-6 sm:px-10 py-6 bg-linear-to-r from-cyan-950/60 via-blue-950/50 to-purple-950/40">
+            <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_30%_50%,rgba(34,211,238,0.15),transparent)]" />
+            <div class="relative flex-1 min-w-0">
+              <span class="text-cyan-400 text-xs font-bold uppercase tracking-wider">Film</span>
+              <h2 class="text-xl sm:text-2xl font-bold text-white mt-1 group-hover:text-cyan-200 transition-colors">
+                Jelajahi Film Terbaru & Populer
+              </h2>
+              <p class="text-gray-400 text-sm mt-1">
+                Tonton film terbaru dan populer dengan kualitas tinggi.
+              </p>
+            </div>
+            <span class="relative shrink-0 inline-flex items-center gap-2 text-cyan-400 font-medium group-hover:gap-3 transition-all">
+              Ke Section Film
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </span>
+          </div>
+        </a>
 
         <!-- Film sections -->
         {initialFilmData && (

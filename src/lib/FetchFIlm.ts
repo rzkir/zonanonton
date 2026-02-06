@@ -53,3 +53,70 @@ export async function fetchFilmHomeData(opts?: ApiEnv | string): Promise<FilmDat
         return emptyFilmData;
     }
 }
+
+export async function fetchFilmDetail(
+    aquaaquariaId: string,
+    opts?: ApiEnv | string
+): Promise<AquariaDetailsData | null> {
+    try {
+        const environment = await fetchEnvironment();
+        const baseURL = environment.data[0].baseURL;
+        const response = await fetch(`${baseURL}/aquaaquaria/${aquaaquariaId}`, {
+            headers: buildAuthHeaders(opts),
+        });
+        if (!response.ok) return null;
+
+        const json = await response.json();
+        if (!json?.ok || !json?.data) return null;
+
+        return json.data as AquariaDetailsData;
+    } catch {
+        return null;
+    }
+}
+
+export async function fetchFilmEpisodeDetail(
+    episodeId: string,
+    opts?: ApiEnv | string
+): Promise<AquariaEpisodeDetailsData | null> {
+    try {
+        const environment = await fetchEnvironment();
+        const baseURL = environment.data[0].baseURL;
+        const response = await fetch(`${baseURL}/aquaaquaria/episode/${episodeId}`, {
+            headers: buildAuthHeaders(opts),
+        });
+        if (!response.ok) return null;
+
+        const json = await response.json();
+        if (!json?.ok || !json?.data) return null;
+
+        return json.data as AquariaEpisodeDetailsData;
+    } catch {
+        return null;
+    }
+}
+
+/**
+ * Fetch resolved stream URL from server API (same endpoint as fetchFilmServer).
+ * When serverId is the encoded token, response is { ok, data: { url } }.
+ * GET /aquaaquaria/server/:serverId
+ */
+export async function fetchFilmServerStreamUrl(
+    serverId: string,
+    opts?: ApiEnv | string
+): Promise<string | null> {
+    try {
+        const environment = await fetchEnvironment();
+        const baseURL = environment?.data?.[0]?.baseURL;
+        if (!baseURL) return null;
+        const response = await fetch(`${baseURL}/aquaaquaria/server/${serverId}`, {
+            headers: buildAuthHeaders(opts),
+        });
+        if (!response.ok) return null;
+        const json: ServerUrlApiResponse = await response.json();
+        if (!json?.ok || !json?.data?.url) return null;
+        return json.data.url;
+    } catch {
+        return null;
+    }
+}

@@ -1,3 +1,5 @@
+//=================== Otakudesu Home ===================//
+
 interface OngoingAnime {
     title: string;
     poster: string;
@@ -30,7 +32,6 @@ interface HomeData {
     ongoingList: OngoingAnime[];
     completedList: CompletedAnime[];
     hero: HeroData;
-    /** Up to 3 heroes for carousel (derived from ongoing + completed). */
     heroes?: HeroData[];
 }
 
@@ -42,7 +43,7 @@ interface Props {
     recommendedAnimeList?: RecommendedAnime[];
 }
 
-// --- Anime Detail ---
+//=================== Otakudesu Detail ===================//
 
 interface GenreItem {
     title: string;

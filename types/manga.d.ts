@@ -12,14 +12,12 @@ interface KomikuListItem {
     releasedOn: string;
 }
 
-/** Bagian recent di data */
 interface KomikuRecentSection {
     href: string;
     komikuUrl: string;
     komikuList: KomikuListItem[];
 }
 
-/** Item manga popular (tanpa views, dipakai di komiku_popular) */
 interface MangaPopularItem {
     title: string;
     poster: string;
@@ -32,19 +30,16 @@ interface MangaPopularItem {
     isHot: boolean;
 }
 
-/** Item manga popular dengan views (manga_popular, manhua_popular, manhwa_popular) */
 interface MangaPopularItemWithViews extends MangaPopularItem {
     views: string;
 }
 
-/** Section popular (komiku_popular, manga_popular, manhua_popular, manhwa_popular) */
 interface KomikuPopularSection {
     href: string;
     komikuUrl: string;
     mangaList: MangaPopularItem[] | MangaPopularItemWithViews[];
 }
 
-/** Data payload response manga home */
 interface MangaHomeData {
     recent: KomikuRecentSection;
     komiku_popular: KomikuPopularSection;
@@ -53,7 +48,6 @@ interface MangaHomeData {
     manhwa_popular: KomikuPopularSection;
 }
 
-/** Response API manga home */
 interface MangaHomeResponse {
     statusCode: number;
     statusMessage: string;
@@ -64,13 +58,11 @@ interface MangaHomeResponse {
 
 //=================== Komiku Details ===================//
 
-/** Sinopsis manga (paragraf + gambar preview) */
 interface KomikuSynopsis {
     paragraphs: string[];
     images: string[];
 }
 
-/** Genre item di halaman detail */
 interface KomikuDetailGenre {
     title: string;
     genreId: string;
@@ -78,7 +70,6 @@ interface KomikuDetailGenre {
     komikuUrl: string;
 }
 
-/** Item chapter di daftar chapter */
 interface KomikuDetailChapter {
     title: string;
     chapterId: string;
@@ -88,7 +79,6 @@ interface KomikuDetailChapter {
     releaseDate: string;
 }
 
-/** Item manga serupa (similar) */
 interface KomikuSimilarManga {
     title: string;
     poster: string;
@@ -100,7 +90,6 @@ interface KomikuSimilarManga {
     description: string;
 }
 
-/** Data payload response manga detail */
 interface MangaDetailData {
     title: string;
     poster: string;
@@ -118,7 +107,6 @@ interface MangaDetailData {
     similarMangaList: KomikuSimilarManga[];
 }
 
-/** Response API manga detail */
 interface MangaDetailResponse {
     statusCode: number;
     statusMessage: string;
@@ -129,7 +117,6 @@ interface MangaDetailResponse {
 
 //=================== Komiku Chapter ===================//
 
-/** Gambar satu halaman di chapter */
 interface KomikuChapterImage {
     src: string;
     alt: string;
@@ -137,12 +124,10 @@ interface KomikuChapterImage {
     fallbackSrc: string;
 }
 
-/** Sinopsis chapter (hanya paragraf) */
 interface KomikuChapterSynopsis {
     paragraphs: string[];
 }
 
-/** Item rekomendasi di halaman chapter */
 interface KomikuChapterRecommended {
     title: string;
     poster: string;
@@ -152,7 +137,6 @@ interface KomikuChapterRecommended {
     updateStatus: string;
 }
 
-/** Data payload response chapter */
 interface KomikuChapterData {
     title: string;
     komikuId: string;
@@ -166,7 +150,6 @@ interface KomikuChapterData {
     recommendedChapters: KomikuChapterRecommended[];
 }
 
-/** Response API chapter */
 interface KomikuChapterResponse {
     statusCode: number;
     statusMessage: string;

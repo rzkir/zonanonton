@@ -1,11 +1,11 @@
-/** Genre item (used in lastmovie) */
+//=================== Aquaaquaria Home ===================//
+
 interface FilmGenre {
     title: string;
     genreId: string;
     href: string;
 }
 
-/** Slider item - featured films in carousel */
 interface FilmSliderItem {
     title: string;
     poster: string;
@@ -15,7 +15,6 @@ interface FilmSliderItem {
     quality?: string;
 }
 
-/** Box office item - films/series in box office section */
 interface FilmBoxOfficeItem {
     title: string;
     poster: string;
@@ -28,7 +27,6 @@ interface FilmBoxOfficeItem {
     tailer?: string;
 }
 
-/** Serial TV item - TV series section */
 interface FilmSerialTvItem {
     title: string;
     poster: string;
@@ -39,7 +37,6 @@ interface FilmSerialTvItem {
     tailer?: string;
 }
 
-/** Popular item - popular films/series */
 interface FilmPopularItem {
     title: string;
     poster: string;
@@ -52,7 +49,6 @@ interface FilmPopularItem {
     tailer?: string;
 }
 
-/** Anime item - anime section */
 interface FilmAnimeItem {
     title: string;
     poster: string;
@@ -63,7 +59,6 @@ interface FilmAnimeItem {
     score?: string;
 }
 
-/** Last movie item - recently added (can be Movie or TV Show with genreList) */
 interface FilmLastMovieItem {
     title: string;
     poster: string;
@@ -78,7 +73,6 @@ interface FilmLastMovieItem {
     genreList?: FilmGenre[];
 }
 
-/** Main data payload from film API */
 interface FilmData {
     slider: FilmSliderItem[];
     boxoffice: FilmBoxOfficeItem[];
@@ -88,11 +82,111 @@ interface FilmData {
     lastmovie: FilmLastMovieItem[];
 }
 
-/** Film API response wrapper */
 interface FilmApiResponse {
     statusCode: number;
     statusMessage: string;
     message: string;
     ok: boolean;
     data: FilmData;
+}
+
+//=================== Aquaaquaria Detail ===================//
+
+interface AquariaDetailsDirector {
+    title: string;
+    directorId: string;
+    href: string;
+}
+
+interface AquariaDetailsCastItem {
+    title: string;
+    castId: string;
+    href: string;
+}
+
+interface AquariaDetailsRelatedItem {
+    title: string;
+    poster: string;
+    aquaaquariaId: string;
+    href: string;
+    genres: string[];
+    releaseDate: string;
+}
+
+interface AquariaDetailsServerListItem {
+    title: string;
+    serverId: string;
+    href: string;
+}
+
+interface AquariaDetailsQuality {
+    title: string;
+    serverList: AquariaDetailsServerListItem[];
+}
+
+interface AquariaDetailsServer {
+    qualities: AquariaDetailsQuality[];
+}
+
+interface AquariaDetailsEpisodeItem {
+    title: string;
+    episodeNumber: number;
+    episodeId: string;
+    href: string;
+}
+
+interface AquariaDetailsData {
+    title: string;
+    aquaaquariaId: string;
+    score: string;
+    director: AquariaDetailsDirector;
+    aired: string;
+    duration: string;
+    episodes: number | string | null;
+    defaultStream: string;
+    country: string;
+    poster: string;
+    description: string;
+    cast: AquariaDetailsCastItem[];
+    genreList: FilmGenre[];
+    relatedList: AquariaDetailsRelatedItem[];
+    server: AquariaDetailsServer;
+    episodeList: AquariaDetailsEpisodeItem[];
+}
+
+interface AquariaDetails {
+    statusCode: number;
+    statusMessage: string;
+    message: string;
+    ok: boolean;
+    data: AquariaDetailsData;
+}
+
+//=================== Aquaaquaria Episode Details ===================//
+
+interface AquariaEpisodeDetailsData {
+    title: string;
+    aquaaquariaId: string;
+    episodes: number | string | null;
+    defaultStream: string;
+    server: AquariaDetailsServer;
+    episodeList: AquariaDetailsEpisodeItem[];
+}
+
+interface AquariaEpisodeDetails {
+    statusCode: number;
+    statusMessage: string;
+    message: string;
+    ok: boolean;
+}
+
+//=================== Aquaaquaria Server ===================//
+
+/** API response when resolving a server stream URL */
+interface ServerUrlApiResponse {
+    statusCode: number;
+    statusMessage: string;
+    message: string;
+    ok: boolean;
+    data: { url: string };
 }

@@ -1,0 +1,808 @@
+---
+import "@/styles/global.css";
+import Header from "@/components/layout/Header.astro";
+import Footer from "@/components/layout/Footer.astro";
+import {
+  fetchFilmDetail,
+  fetchFilmServerStreamUrl,
+} from "@/lib/FetchFIlm";
+
+export const prerender = false;
+
+const { id } = Astro.params;
+const filmId = id ?? "";
+if (!filmId) return Astro.redirect("/");
+
+const apiSecret =
+  import.meta.env.API_SECRET ?? import.meta.env.PUBLIC_API_SECRET ?? "";
+const film = await fetchFilmDetail(filmId, { apiSecret });
+
+if (!film) {
+  return Astro.redirect("/");
+}
+
+const title = film.title ?? "Film";
+const description = film.description ?? title;
+const backdropUrl =
+  film.poster ??
+  "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1920&auto=format&fit=crop";
+const genreLabels = film.genreList?.map((g) => g.title).join(", ") ?? "";
+const releaseYear = film.aired
+  ? (film.aired.match(/\d{4}/)?.[0] ?? film.aired)
+  : "";
+
+const episodeList = film.episodeList ?? [];
+const hasEpisodes = episodeList.length > 0;
+const episodeCount =
+  typeof film.episodes === "number" ? film.episodes : episodeList.length;
+
+// Episode terbaru untuk CTA Watch Now (series)
+const latestEpisode = hasEpisodes ? episodeList[episodeList.length - 1] : null;
+
+// Untuk movie: resolve stream URL tiap server (sama seperti halaman episode)
+type ServerWithUrl = {
+  title: string;
+  serverId: string;
+  href: string;
+  streamUrl: string | null;
+};
+type QualityWithServers = { title: string; servers: ServerWithUrl[] };
+const movieServerQualitiesWithUrls: QualityWithServers[] =
+  !hasEpisodes && film.server?.qualities
+    ? await Promise.all(
+        film.server.qualities.map(async (quality) => ({
+          title: quality.title,
+          servers: await Promise.all(
+            quality.serverList.map(async (server) => ({
+              ...server,
+              streamUrl: await fetchFilmServerStreamUrl(server.serverId, {
+                apiSecret,
+              }),
+            })),
+          ),
+        })),
+      )
+    : [];
+
+const EPISODES_PER_PAGE = 20;
+const pageParam = Astro.url.searchParams.get("page");
+const currentPage = Math.max(
+  1,
+  Math.min(
+    Number.parseInt(pageParam ?? "1", 10) || 1,
+    Math.ceil(episodeList.length / EPISODES_PER_PAGE) || 1,
+  ),
+);
+const totalPages = Math.ceil(episodeList.length / EPISODES_PER_PAGE) || 1;
+const paginatedEpisodes = episodeList.slice(
+  (currentPage - 1) * EPISODES_PER_PAGE,
+  currentPage * EPISODES_PER_PAGE,
+);
+
+function buildPageUrl(page: number) {
+  const url = new URL(Astro.url);
+  if (page <= 1) url.searchParams.delete("page");
+  else url.searchParams.set("page", String(page));
+  return url.pathname + url.search;
+}
+---
+
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="view-transition" content="same-origin" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} | Nebula Stream</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    {film.poster && <meta property="og:image" content={film.poster} />}
+  </head>
+
+  <body
+    class="min-h-screen bg-(--bg-deep) text-white overflow-x-hidden font-['Satoshi',sans-serif]"
+    data-mode={hasEpisodes ? "series" : "movie"}
+  >
+    <Header />
+
+    <div class="min-h-screen flex flex-col">
+      <!-- Hero Section -->
+      <div class="relative w-full h-[60vh] lg:h-[75vh] mt-20">
+        <div class="absolute inset-0">
+          <img
+            src={backdropUrl}
+            alt=""
+            class="w-full h-full object-cover"
+            fetchpriority="high"
+          />
+          <div class="absolute inset-0 hero-overlay"></div>
+        </div>
+
+        <div
+          class="relative h-full max-w-7xl mx-auto px-6 lg:px-12 flex flex-col justify-end pb-12 lg:pb-20"
+        >
+          <div class="flex flex-col md:flex-row gap-10 items-end">
+            <!-- Poster -->
+            <div
+              class="hidden md:block w-1/4 lg:w-1/5 shrink-0 animate-fade-in"
+              style="animation-delay: 0.1s"
+            >
+              <div
+                class="aspect-2/3 rounded-2xl overflow-hidden card-shadow border border-white/10 shadow-2xl relative group"
+              >
+                <img
+                  src={film.poster}
+                  alt={film.title}
+                  class="w-full h-full object-cover"
+                />
+                <div
+                  class="absolute inset-0 bg-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                >
+                </div>
+              </div>
+            </div>
+
+            <!-- Metadata -->
+            <div class="flex-1 animate-fade-in" style="animation-delay: 0.2s">
+              <div class="flex flex-wrap items-center gap-3 mb-4">
+                <span
+                  class="px-3 py-1 bg-white/10 text-white text-[10px] font-bold rounded border border-white/10 uppercase tracking-widest movie-only"
+                  >Movie</span
+                >
+                <span
+                  class="px-3 py-1 bg-purple-500 text-white text-[10px] font-bold rounded border border-purple-400 uppercase tracking-widest series-only"
+                  >Series</span
+                >
+                {
+                  film.score && (
+                    <span class="flex items-center gap-1 text-yellow-400">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        class="text-yellow-400"
+                      >
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                      <span class="font-bold text-white">{film.score}</span>
+                      <span class="text-white/40 text-sm">Rating</span>
+                    </span>
+                  )
+                }
+              </div>
+              <h1
+                class="text-5xl lg:text-7xl font-extrabold mb-6 text-gradient-cyan leading-tight font-['Cabinet_Grotesk',sans-serif]"
+              >
+                {film.title}
+              </h1>
+
+              <div
+                class="flex flex-wrap items-center gap-6 text-sm font-medium text-white/70 mb-8"
+              >
+                {
+                  releaseYear && (
+                    <span class="flex items-center gap-1.5">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        class="text-cyan-400 shrink-0"
+                      >
+                        <>
+                          <rect
+                            x="3"
+                            y="4"
+                            width="18"
+                            height="18"
+                            rx="2"
+                            ry="2"
+                          />
+                          <line x1="16" y1="2" x2="16" y2="6" />
+                          <line x1="8" y1="2" x2="8" y2="6" />
+                          <line x1="3" y1="10" x2="21" y2="10" />
+                        </>
+                      </svg>
+                      {releaseYear}
+                    </span>
+                  )
+                }
+                {
+                  film.duration && (
+                    <span class="flex items-center gap-1.5 movie-only">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        class="text-cyan-400 shrink-0"
+                      >
+                        <>
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </>
+                      </svg>
+                      {film.duration}
+                    </span>
+                  )
+                }
+                {
+                  hasEpisodes && (
+                    <span class="flex items-center gap-1.5 series-only">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        class="text-cyan-400 shrink-0"
+                      >
+                        <>
+                          <rect
+                            x="2"
+                            y="7"
+                            width="20"
+                            height="15"
+                            rx="2"
+                            ry="2"
+                          />
+                          <polyline points="17 2 12 7 7 2" />
+                        </>
+                      </svg>
+                      {episodeCount}{" "}
+                      {episodeCount === 1 ? "Episode" : "Episodes"}
+                    </span>
+                  )
+                }
+                {
+                  genreLabels && (
+                    <span class="flex items-center gap-1.5">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        class="text-cyan-400 shrink-0"
+                      >
+                        <>
+                          <rect
+                            x="2"
+                            y="2"
+                            width="20"
+                            height="20"
+                            rx="2.18"
+                            ry="2.18"
+                          />
+                          <line x1="7" y1="2" x2="7" y2="22" />
+                          <line x1="17" y1="2" x2="17" y2="22" />
+                          <line x1="2" y1="12" x2="22" y2="12" />
+                          <line x1="2" y1="7" x2="7" y2="7" />
+                          <line x1="2" y1="17" x2="7" y2="17" />
+                          <line x1="17" y1="17" x2="22" y2="17" />
+                          <line x1="17" y1="7" x2="22" y2="7" />
+                        </>
+                      </svg>
+                      {genreLabels}
+                    </span>
+                  )
+                }
+                {
+                  film.country && (
+                    <span class="px-2 py-0.5 border border-white/20 rounded text-[10px] tracking-widest uppercase">
+                      {film.country}
+                    </span>
+                  )
+                }
+              </div>
+
+              <div class="flex flex-wrap items-center gap-4">
+                {
+                  hasEpisodes && latestEpisode ? (
+                    <a
+                      href={`/film/episode/${latestEpisode.episodeId}`}
+                      class="flex items-center gap-2 px-6 py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl transition-all border border-cyan-400 shadow-lg shadow-cyan-500/25"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
+                      WATCH NOW
+                    </a>
+                  ) : !hasEpisodes ? (
+                    <button
+                      type="button"
+                      class="watch-now-movie-btn flex items-center gap-2 px-6 py-4 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded-xl transition-all border border-cyan-400 shadow-lg shadow-cyan-500/25"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
+                      WATCH NOW
+                    </button>
+                  ) : null
+                }
+                <button
+                  type="button"
+                  class="flex items-center gap-2 px-6 py-4 bg-white/10 hover:bg-white/20 transition-all border border-white/10 rounded-xl font-bold"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19"></line><line
+                      x1="5"
+                      y1="12"
+                      x2="19"
+                      y2="12"></line>
+                  </svg>
+                  ADD TO LIST
+                </button>
+                <button
+                  type="button"
+                  class="p-4 bg-white/5 hover:bg-white/10 transition-all border border-white/10 rounded-xl"
+                  aria-label="Share"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <circle cx="18" cy="5" r="3"></circle><circle
+                      cx="6"
+                      cy="12"
+                      r="3"></circle><circle cx="18" cy="19" r="3"
+                    ></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"
+                    ></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"
+                    ></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Sections -->
+      <main class="max-w-7xl mx-auto px-6 lg:px-12 py-16 w-full">
+        <!-- Media Player (movie only - no episodes, tampil setelah klik Watch Now) -->
+        {
+          !hasEpisodes && (film.defaultStream || movieServerQualitiesWithUrls.length > 0) && (
+            <section id="player" class="mb-16 animate-fade-in hidden">
+              <h2 class="text-2xl font-bold mb-6 flex items-center gap-3 font-['Cabinet_Grotesk',sans-serif]">
+                <span class="w-1.5 h-6 bg-cyan-400 rounded-full" />
+                Watch Now
+              </h2>
+              <div class="bg-black/40 rounded-2xl overflow-hidden border border-white/10">
+                <iframe
+                  id="film-player"
+                  src={
+                    film.defaultStream && film.defaultStream !== "about:blank"
+                      ? film.defaultStream
+                      : "about:blank"
+                  }
+                  class="w-full aspect-video"
+                  allowfullscreen
+                  allow="autoplay; fullscreen"
+                  title={title}
+                />
+              </div>
+              {movieServerQualitiesWithUrls.length > 0 && (
+                <div class="bg-white/5 border border-white/10 rounded-2xl p-6 mt-6">
+                  <h3 class="text-xl font-bold mb-4 font-['Cabinet_Grotesk',sans-serif]">
+                    Streaming Servers
+                  </h3>
+                  <div class="space-y-4">
+                    {movieServerQualitiesWithUrls.map((quality) => (
+                      <div>
+                        <h4 class="text-sm font-bold text-white/80 mb-3 uppercase tracking-wider">
+                          {quality.title}
+                        </h4>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                          {quality.servers.map((server) => (
+                            <button
+                              type="button"
+                              data-stream-url={server.streamUrl ?? undefined}
+                              class="film-server-btn px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-colors text-sm font-medium text-center disabled:opacity-50 disabled:cursor-not-allowed data-active:bg-cyan-400/20 data-active:border-cyan-400/40 data-active:text-cyan-400"
+                              disabled={!server.streamUrl}
+                            >
+                              {server.title}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </section>
+          )
+        }
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-16">
+          <!-- Left Column: Details -->
+          <div class="lg:col-span-2 space-y-12">
+            <!-- Episode List (when has episodes) -->
+            {
+              hasEpisodes && (
+                <section class="animate-fade-in">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                    <div class="flex items-center gap-4">
+                      <h2 class="text-2xl font-bold flex items-center gap-3 font-['Cabinet_Grotesk',sans-serif]">
+                        <span class="w-1.5 h-6 bg-cyan-400 rounded-full" />
+                        Episode List
+                      </h2>
+                      <span class="bg-white/5 border border-white/10 px-3 py-1 rounded-full text-xs text-white/60">
+                        {episodeCount}{" "}
+                        {episodeCount === 1 ? "Episode" : "Episodes"}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {paginatedEpisodes.map((ep) => (
+                      <a
+                        href={`/film/episode/${ep.episodeId}`}
+                        class="group cursor-pointer bg-white/5 border border-white/5 rounded-2xl p-3 flex gap-4 hover:bg-white/10 hover:border-cyan-400/20 transition-all"
+                      >
+                        <div class="relative w-24 h-24 shrink-0 rounded-xl overflow-hidden bg-white/5">
+                          <img
+                            src={film.poster}
+                            alt={ep.title}
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="28"
+                              height="28"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              class="text-white"
+                            >
+                              <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                          </div>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center min-w-0">
+                          <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[10px] font-extrabold text-cyan-400 tracking-wider">
+                              {ep.title}
+                            </span>
+                          </div>
+                          <h4 class="text-sm font-bold truncate group-hover:text-cyan-400 transition-colors">
+                            Episode {ep.episodeNumber}
+                          </h4>
+                        </div>
+                      </a>
+                    ))}
+                  </div>
+
+                  {/* Pagination - 20 per page */}
+                  {totalPages > 1 && (
+                    <div class="flex items-center justify-center gap-3 mt-10">
+                      {currentPage > 1 ? (
+                        <a
+                          href={buildPageUrl(currentPage - 1)}
+                          class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                          aria-label="Previous page"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <polyline points="15 18 9 12 15 6" />
+                          </svg>
+                        </a>
+                      ) : (
+                        <span class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/20 cursor-not-allowed">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <polyline points="15 18 9 12 15 6" />
+                          </svg>
+                        </span>
+                      )}
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (p) => (
+                          <a
+                            href={buildPageUrl(p)}
+                            class={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold transition-colors ${
+                              p === currentPage
+                                ? "bg-cyan-400 text-black"
+                                : "bg-white/5 border border-white/10 text-white/60 hover:text-white"
+                            }`}
+                          >
+                            {p}
+                          </a>
+                        ),
+                      )}
+                      {currentPage < totalPages ? (
+                        <a
+                          href={buildPageUrl(currentPage + 1)}
+                          class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-colors"
+                          aria-label="Next page"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                        </a>
+                      ) : (
+                        <span class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/20 cursor-not-allowed">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                          >
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </section>
+              )
+            }
+
+            <!-- Synopsis -->
+            {
+              film.description && (
+                <section class="animate-fade-in" style="animation-delay: 0.3s">
+                  <h2 class="text-2xl font-bold mb-6 flex items-center gap-3 font-['Cabinet_Grotesk',sans-serif]">
+                    <span class="w-1.5 h-6 bg-cyan-400 rounded-full" />
+                    Synopsis
+                  </h2>
+                  <p class="text-lg text-white/60 leading-relaxed font-light">
+                    {film.description}
+                  </p>
+                </section>
+              )
+            }
+
+            <!-- Cast & Crew -->
+            {
+              film.cast && film.cast.length > 0 && (
+                <section class="animate-fade-in" style="animation-delay: 0.4s">
+                  <h2 class="text-2xl font-bold mb-8 flex items-center gap-3 font-['Cabinet_Grotesk',sans-serif]">
+                    <span class="w-1.5 h-6 bg-purple-500 rounded-full" />
+                    Cast & Crew
+                  </h2>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                    {film.cast.slice(0, 8).map((person) => (
+                      <a
+                        href={person.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="group cursor-pointer block"
+                      >
+                        <div class="aspect-square rounded-2xl overflow-hidden mb-3 border border-white/5 grayscale group-hover:grayscale-0 transition-all duration-500 bg-white/5">
+                          <img
+                            src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(person.title)}`}
+                            alt={person.title}
+                            class="w-full h-full object-cover"
+                          />
+                        </div>
+                        <h4 class="font-bold text-white">{person.title}</h4>
+                      </a>
+                    ))}
+                  </div>
+                </section>
+              )
+            }
+          </div>
+
+          <!-- Right Column: Info -->
+          <aside
+            class="space-y-8 animate-fade-in"
+            style="animation-delay: 0.5s"
+          >
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-8">
+              <h3
+                class="text-xl font-bold mb-6 font-['Cabinet_Grotesk',sans-serif]"
+              >
+                Production Info
+              </h3>
+              <div class="space-y-6">
+                {
+                  film.director?.title && (
+                    <div>
+                      <p class="text-xs uppercase tracking-widest text-white/40 mb-1">
+                        Director
+                      </p>
+                      <a
+                        href={film.director.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="font-bold text-cyan-400 hover:underline"
+                      >
+                        {film.director.title}
+                      </a>
+                    </div>
+                  )
+                }
+                {
+                  film.country && (
+                    <div>
+                      <p class="text-xs uppercase tracking-widest text-white/40 mb-1">
+                        Country
+                      </p>
+                      <p class="font-bold">{film.country}</p>
+                    </div>
+                  )
+                }
+                {
+                  film.aired && (
+                    <div>
+                      <p class="text-xs uppercase tracking-widest text-white/40 mb-1">
+                        Aired
+                      </p>
+                      <p class="font-bold">{film.aired}</p>
+                    </div>
+                  )
+                }
+                {
+                  film.genreList && film.genreList.length > 0 && (
+                    <div>
+                      <p class="text-xs uppercase tracking-widest text-white/40 mb-1">
+                        Genres
+                      </p>
+                      <div class="flex flex-wrap gap-2 mt-2">
+                        {film.genreList.map((g) => (
+                          <a
+                            href={g.href}
+                            class="px-3 py-1 bg-white/10 rounded-full text-xs hover:bg-white/20 transition-colors"
+                          >
+                            {g.title}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                }
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <!-- Similar / Related Films -->
+        {
+          film.relatedList && film.relatedList.length > 0 && (
+            <section class="mt-24">
+              <div class="flex items-center gap-12 border-b border-white/10 mb-12">
+                <span class="pb-4 text-xl font-bold text-cyan-400 relative">
+                  Similar Films
+                  <span class="active-tab-indicator" />
+                </span>
+              </div>
+              <div class="flex items-center justify-between mb-8">
+                <h3 class="text-2xl font-bold font-['Cabinet_Grotesk',sans-serif]">
+                  You Might Also Like
+                </h3>
+              </div>
+              <div class="flex gap-6 overflow-x-auto hide-scrollbar pb-8">
+                {film.relatedList.map((item) => (
+                  <a
+                    href={`/film/${item.aquaaquariaId}`}
+                    class="min-w-[220px] lg:min-w-[240px] group cursor-pointer block"
+                  >
+                    <div class="relative aspect-2/3 rounded-2xl overflow-hidden mb-4">
+                      <img
+                        src={item.poster}
+                        alt={item.title}
+                        class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div class="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
+                        <span class="w-full py-2 bg-cyan-400 text-black font-bold rounded-lg text-sm text-center">
+                          QUICK WATCH
+                        </span>
+                      </div>
+                    </div>
+                    <h4 class="font-bold group-hover:text-cyan-400 transition-colors">
+                      {item.title}
+                    </h4>
+                    <p class="text-sm text-white/40">
+                      {item.releaseDate ?? ""} {item.genres?.[0] ?? ""}
+                    </p>
+                  </a>
+                ))}
+              </div>
+            </section>
+          )
+        }
+      </main>
+
+      <Footer />
+    </div>
+
+    {
+      !hasEpisodes &&
+        (film.defaultStream || movieServerQualitiesWithUrls.length > 0) && (
+        <script>
+          // Tampilkan media player saat CTA Watch Now diklik
+          const watchNowBtn = document.querySelector(".watch-now-movie-btn");
+          const playerSection = document.getElementById("player");
+          if (watchNowBtn && playerSection) {
+            watchNowBtn.addEventListener("click", () => {
+              playerSection.classList.remove("hidden");
+              playerSection.scrollIntoView({ behavior: "smooth" });
+            });
+          }
+          // Ganti stream saat pilih server
+          const filmServerBtns = document.querySelectorAll(
+            ".film-server-btn[data-stream-url]",
+          );
+          const filmPlayer = document.getElementById(
+            "film-player",
+          ) as HTMLIFrameElement | null;
+          filmServerBtns.forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const url = btn.getAttribute("data-stream-url");
+              if (!url || !filmPlayer) return;
+              filmServerBtns.forEach((b) => b.removeAttribute("data-active"));
+              btn.setAttribute("data-active", "");
+              filmPlayer.src = url;
+            });
+          });
+        </script>
+      )
+    }
+  </body>
+</html>

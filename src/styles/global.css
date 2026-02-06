@@ -47,6 +47,7 @@ h3 {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -59,6 +60,44 @@ h3 {
 
 .hero-gradient {
   background: linear-gradient(0deg, var(--bg-deep) 0%, rgba(10, 11, 20, 0.4) 50%, rgba(10, 11, 20, 0) 100%);
+}
+
+.hero-overlay {
+  background: linear-gradient(0deg, var(--bg-deep) 0%, rgba(10, 11, 20, 0.6) 50%, rgba(10, 11, 20, 0.2) 100%);
+}
+
+.text-gradient-cyan {
+  background: linear-gradient(135deg, #22d3ee 0%, #0ea5e9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.card-shadow {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.animate-fade-in {
+  animation: slideUp 0.8s ease-out forwards;
+}
+
+.active-tab-indicator {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 10px var(--accent-cyan);
+}
+
+/* Film detail: movie vs series mode */
+[data-mode="movie"] .series-only {
+  display: none;
+}
+
+[data-mode="series"] .movie-only {
+  display: none;
 }
 
 .card-hover:hover {
