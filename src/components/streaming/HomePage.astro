@@ -49,6 +49,47 @@ const {  completedList, hero } = initialData ?? { ongoingList: [], completedList
 const heroesList: HeroData[] = initialData?.heroes?.length ? initialData?.heroes : [hero];
 const heroAnimeIds = new Set(heroesList.map((h: HeroData) => h.animeId).filter(Boolean));
 const ongoingListWithoutHeroes = initialData?.ongoingList?.filter((item: OngoingAnime) => !heroAnimeIds.has(item.animeId)) ?? [];
+
+// Hero lists per section (untuk diganti saat tab NavigationMenu diklik)
+const filmHeroesList: HeroData[] = (initialFilmData?.slider ?? []).slice(0, 8).map((item: FilmSliderItem) => ({
+  title: item.title,
+  description: item.releaseDate ?? '',
+  image: item.poster,
+  type: 'film',
+  year: '',
+  rating: '',
+  animeId: '',
+  aquaaquariaId: item.aquaaquariaId,
+}));
+
+const mangaSourceList = [
+  ...(initialMangaHomeData?.recent?.komikuList ?? []),
+  ...(initialMangaHomeData?.komiku_popular?.mangaList ?? []),
+];
+const mangaHeroesList: HeroData[] = mangaSourceList.slice(0, 8).map((item: KomikuListItem | MangaPopularItem) => ({
+  title: item.title,
+  description: '',
+  image: item.poster,
+  type: 'manga',
+  year: '',
+  rating: '',
+  animeId: '',
+  mangaId: 'komikuId' in item ? item.komikuId : (item as MangaPopularItem).mangaId,
+}));
+
+const drakorSourceList = [
+  ...(initialDrakorData?.ongoing?.animeList ?? []),
+  ...(initialDrakorData?.drama_terbaru?.animeList ?? []),
+];
+const drakorHeroesList: HeroData[] = drakorSourceList.slice(0, 8).map((item: DrakorAnimeItem) => ({
+  title: item.title,
+  description: item.duration ?? '',
+  image: item.poster,
+  type: 'drakor',
+  year: '',
+  rating: item.score ?? '',
+  animeId: item.animeId,
+}));
 ---
 
 {
@@ -144,24 +185,38 @@ const ongoingListWithoutHeroes = initialData?.ongoingList?.filter((item: Ongoing
     </section>
   ) : (
     <>
-      <HeroCorousel heroesList={heroesList} />
+      <!-- Hero carousel: scroll target saat tab diklik -->
+      <div id="home-hero-carousel" class="scroll-mt-20">
+        <div class="hero-tab-panel relative" data-tab="anime" data-hero-panel>
+          <HeroCorousel heroesList={heroesList} />
+        </div>
+        <div class="hero-tab-panel relative hidden" data-tab="manga" data-hero-panel>
+          <HeroCorousel heroesList={mangaHeroesList} />
+        </div>
+        <div class="hero-tab-panel relative hidden" data-tab="film" data-hero-panel>
+          <HeroCorousel heroesList={filmHeroesList} />
+        </div>
+        <div class="hero-tab-panel relative hidden" data-tab="drakor" data-hero-panel>
+          <HeroCorousel heroesList={drakorHeroesList} />
+        </div>
+      </div>
 
       <NavigationMenu />
 
-      <!-- Content Sections -->
-      <main class="max-w-[1440px] mx-auto px-6 -mt-4 relative z-10 space-y-10 pb-24">
+      <!-- Content Sections (id untuk scroll saat tab diklik) -->
+      <main id="panel-semua" class="max-w-[1440px] mx-auto px-6 -mt-4 relative z-10 space-y-10 pb-24">
         <!-- Anime section -->
-        <div id="panel-anime" role="tabpanel" aria-labelledby="tab-anime" class="home-tab-panel space-y-10" data-tab="anime">
+        <div id="panel-anime" role="tabpanel" aria-labelledby="tab-anime" class="home-tab-panel space-y-10 scroll-mt-24" data-tab="anime">
           <Ongoing ongoingList={ongoingListWithoutHeroes} />
           <Completed completedList={completedList} />
           <Schedule scheduleData={scheduleData} />
         </div>
 
         <!-- Banner Promotion Section Manga -->
-        <div class="home-tab-panel" data-tab="manga">
+        <div id="panel-manga" class="home-tab-panel scroll-mt-24" data-tab="manga">
         <a
           href="/manga"
-          class="block w-full rounded-xl overflow-hidden border border-white/5 transition-all duration-300 group"
+          class="block w-full rounded-xl overflow-hidden border border-white/5 transition-all duration-300 group mb-10"
         >
           <div class="relative min-h-[140px] sm:min-h-[160px] flex items-center justify-between gap-6 px-6 sm:px-10 py-6 bg-linear-to-r from-cyan-950/60 via-blue-950/50 to-purple-950/40">
             <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_30%_50%,rgba(34,211,238,0.15),transparent)]" />
@@ -199,11 +254,11 @@ const ongoingListWithoutHeroes = initialData?.ongoingList?.filter((item: Ongoing
         <ManhuaPopular mangaList={initialMangaHomeData?.manhua_popular?.mangaList ?? []} />
         </div>
 
-        <!-- Film section -->
+        <!-- Banner Film section -->
         <div class="home-tab-panel" data-tab="film">
         <a
           href="/film"
-          class="block w-full rounded-xl overflow-hidden border border-white/5 transition-all duration-300 group"
+          class="block w-full rounded-xl overflow-hidden border border-white/5 transition-all duration-300 group mb-10"
         >
           <div class="relative min-h-[140px] sm:min-h-[160px] flex items-center justify-between gap-6 px-6 sm:px-10 py-6 bg-linear-to-r from-cyan-950/60 via-blue-950/50 to-purple-950/40">
             <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_30%_50%,rgba(34,211,238,0.15),transparent)]" />
@@ -238,11 +293,11 @@ const ongoingListWithoutHeroes = initialData?.ongoingList?.filter((item: Ongoing
         )}
         </div>
 
-        <!-- Drakor section -->
-        <div class="home-tab-panel" data-tab="drakor">
+        <!-- Banner Drakor section -->
+        <div id="panel-drakor" class="home-tab-panel scroll-mt-24" data-tab="drakor">
         <a 
           href="/drakor"
-          class="block w-full rounded-xl overflow-hidden border border-white/5 transition-all duration-300 group"
+          class="block w-full rounded-xl overflow-hidden border border-white/5 transition-all duration-300 group mb-10"
         >
           <div class="relative min-h-[140px] sm:min-h-[160px] flex items-center justify-between gap-6 px-6 sm:px-10 py-6 bg-linear-to-r from-cyan-950/60 via-blue-950/50 to-purple-950/40">
             <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_30%_50%,rgba(34,211,238,0.15),transparent)]" />

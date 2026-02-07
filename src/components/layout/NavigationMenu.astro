@@ -99,12 +99,31 @@
         const show = selectedFilter === 'semua' || tab === selectedFilter;
         el.style.display = show ? '' : 'none';
       });
+
+      // Sinkronkan hero carousel: tampilkan hero sesuai tab (semua = anime)
+      const heroPanels = document.querySelectorAll<HTMLElement>('[data-hero-panel]');
+      const heroTab = selectedFilter === 'semua' ? 'anime' : selectedFilter;
+      heroPanels.forEach((el) => {
+        const tab = el.getAttribute('data-tab');
+        const show = tab === heroTab;
+        el.classList.toggle('hidden', !show);
+      });
+    }
+
+    function scrollToCarousel() {
+      const el = document.getElementById('home-hero-carousel');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
 
     tabs.forEach((tab) => {
       tab.addEventListener('click', () => {
         const filter = tab.getAttribute('data-tab-filter');
-        if (filter) setActiveTab(filter);
+        if (filter) {
+          setActiveTab(filter);
+          scrollToCarousel();
+        }
       });
     });
 

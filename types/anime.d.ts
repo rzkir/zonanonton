@@ -22,10 +22,14 @@ interface HeroData {
     title: string;
     description: string;
     image: string;
-    type: 'anime';
+    type: 'anime' | 'film' | 'manga' | 'drakor';
     year: string;
     rating: string;
     animeId: string;
+    /** Film id (same as FilmCard: /film/{aquaaquariaId}) */
+    aquaaquariaId?: string;
+    /** Manga id (same as MangaCard: /manga/{mangaId}) */
+    mangaId?: string;
 }
 
 interface HomeData {

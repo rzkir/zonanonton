@@ -6,10 +6,28 @@ export interface HeroData {
   title: string;
   description: string;
   image: string;
-  type: "anime";
+  type: "anime" | "film" | "manga" | "drakor";
   year: string;
   rating: string;
   animeId: string;
+  /** Film id (same as FilmCard: /film/{aquaaquariaId}) */
+  aquaaquariaId?: string;
+  /** Manga id (same as MangaCard: /manga/{mangaId}) */
+  mangaId?: string;
+}
+
+/** Build Watch link like cards: FilmCard, DrakorCard, MangaCard, anime */
+function getWatchHref(h: HeroData): string {
+  switch (h.type) {
+    case "film":
+      return `/film/${h.aquaaquariaId ?? ""}`;
+    case "manga":
+      return `/manga/${h.mangaId ?? ""}`;
+    case "drakor":
+      return `/drakor/${h.animeId ?? ""}`;
+    default:
+      return `/anime/${h.animeId ?? ""}`;
+  }
 }
 
 const AUTOPLAY_INTERVAL = 5000;
@@ -136,7 +154,7 @@ export default function HeroCarouselClient({ heroesList }: HeroCarouselClientPro
           const trendNum = total <= 1 ? i + 1 : i === 0 ? total : i === slideCount - 1 ? 1 : i;
           return (
             <motion.div
-              key={`${h.animeId || h.title}-${i}`}
+              key={`${h.type}-${h.animeId ?? h.aquaaquariaId ?? h.mangaId ?? h.title}-${i}`}
               className="hero-carousel__slide absolute inset-0 w-full h-full"
               initial={false}
               animate={{ opacity: i === index ? 1 : 0 }}
@@ -210,7 +228,17 @@ export default function HeroCarouselClient({ heroesList }: HeroCarouselClientPro
                     custom={3}
                   >
                     <a
-                      href={`/anime/${h.animeId ?? ""}`}
+                      href={
+                        (h.type === "film" && h.aquaaquariaId)
+                          ? `/film/${h.aquaaquariaId}`
+                          : (h.type === "manga" && h.mangaId)
+                            ? `/manga/${h.mangaId}`
+                            : (h.type === "drakor" && h.animeId)
+                              ? `/drakor/${h.animeId}`
+                              : h.animeId
+                                ? `/anime/${h.animeId}`
+                                : "#"
+                      }
                       className="px-8 py-4 bg-white text-black font-bold rounded-full flex items-center gap-3 hover:bg-cyan-400 hover:text-white transition-all duration-300 group shadow-xl shadow-white/5"
                     >
                       <svg
