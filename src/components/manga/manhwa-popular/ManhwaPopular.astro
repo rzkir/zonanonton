@@ -1,4 +1,6 @@
 ---
+import MangaCard from "../../ui/MangaCard.astro";
+
 export interface Props {
   mangaList: (MangaPopularItem | MangaPopularItemWithViews)[];
 }
@@ -24,37 +26,7 @@ const list = mangaList ?? [];
       </div>
       <div class="flex gap-6 py-4 overflow-x-auto hide-scrollbar">
         {list.map((item: MangaPopularItem | MangaPopularItemWithViews) => (
-          <a
-            href={`/manga/${item.mangaId}`}
-            class="flex-none w-[200px] group cursor-pointer"
-          >
-            <div class="relative aspect-2/3 rounded-xl overflow-hidden mb-3 card-hover transition-all duration-300 border border-white/5">
-              <img
-                src={item.poster}
-                alt={item.title}
-                class="w-full h-full object-cover"
-                loading="lazy"
-              />
-              {item.isHot && (
-                <span class="absolute top-2 right-2 bg-rose-500 text-[10px] font-bold px-2 py-0.5 rounded">
-                  HOT
-                </span>
-              )}
-              <div class="absolute inset-0 bg-linear-to-t from-black/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4">
-                <span class="text-[10px] text-emerald-400 font-bold uppercase">
-                  {item.type}
-                </span>
-                <p class="text-xs text-white font-medium">
-                  {item.latestChapter}
-                  {"views" in item && item.views ? ` · ${item.views}` : ""}
-                </p>
-              </div>
-            </div>
-            <h3 class="font-bold text-sm group-hover:text-cyan-400 transition-colors text-white line-clamp-2">
-              {item.title}
-            </h3>
-            <p class="text-xs text-gray-500">{item.latestChapter}</p>
-          </a>
+          <MangaCard item={item} accentColor="emerald" />
         ))}
       </div>
     </section>

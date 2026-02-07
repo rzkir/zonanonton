@@ -27,14 +27,21 @@ import LastMovie from "@/components/film/lastmovie/LastMovie.astro";
 
 import FilmAnime from "@/components/film/anime/FilmAnime.astro";
 
+import DramaOngoing from "@/components/drakor/ongoing/DramaOngoing.astro";
+
+import DramaTerbaru from "@/components/drakor/drama-terbaru/DramaTerbaru.astro";
+
+import NavigationMenu from "@/components/layout/NavigationMenu.astro";
+
 export interface Props {
   initialData: HomeData | null;
   scheduleData?: ScheduleData | null;
   initialMangaHomeData?: MangaHomeData | null;
   initialFilmData?: FilmData | null;
+  initialDrakorData?: DrakorData | null;
 }
 
-const { initialData, scheduleData: scheduleDataProp = null, initialMangaHomeData = undefined, initialFilmData = null } = Astro.props;
+const { initialData, scheduleData: scheduleDataProp = null, initialMangaHomeData = undefined, initialFilmData = null, initialDrakorData = null } = Astro.props;
 
 const scheduleData = scheduleDataProp ?? { days: [] };
 
@@ -139,18 +146,19 @@ const ongoingListWithoutHeroes = initialData?.ongoingList?.filter((item: Ongoing
     <>
       <HeroCorousel heroesList={heroesList} />
 
+      <NavigationMenu />
+
       <!-- Content Sections -->
-      <main class="max-w-[1440px] mx-auto px-6 -mt-32 relative z-10 space-y-10">
-        <!-- Ongoing Anime (Continue Watching style) -->
-        <Ongoing ongoingList={ongoingListWithoutHeroes} />
-
-        <!-- Completed Anime (Completed Anime grid) -->
-        <Completed completedList={completedList} />
-
-        <!-- Schedule (Anime schedule) -->
-        <Schedule scheduleData={scheduleData} />
+      <main class="max-w-[1440px] mx-auto px-6 -mt-4 relative z-10 space-y-10 pb-24">
+        <!-- Anime section -->
+        <div id="panel-anime" role="tabpanel" aria-labelledby="tab-anime" class="home-tab-panel space-y-10" data-tab="anime">
+          <Ongoing ongoingList={ongoingListWithoutHeroes} />
+          <Completed completedList={completedList} />
+          <Schedule scheduleData={scheduleData} />
+        </div>
 
         <!-- Banner Promotion Section Manga -->
+        <div class="home-tab-panel" data-tab="manga">
         <a
           href="/manga"
           class="block w-full rounded-xl overflow-hidden border border-white/5 transition-all duration-300 group"
@@ -189,7 +197,10 @@ const ongoingListWithoutHeroes = initialData?.ongoingList?.filter((item: Ongoing
 
         <!-- Popular Manhua (Popular Manhua list) -->
         <ManhuaPopular mangaList={initialMangaHomeData?.manhua_popular?.mangaList ?? []} />
+        </div>
 
+        <!-- Film section -->
+        <div class="home-tab-panel" data-tab="film">
         <a
           href="/film"
           class="block w-full rounded-xl overflow-hidden border border-white/5 transition-all duration-300 group"
@@ -225,6 +236,41 @@ const ongoingListWithoutHeroes = initialData?.ongoingList?.filter((item: Ongoing
             <FilmAnime animeList={initialFilmData.anime ?? []} />
           </>
         )}
+        </div>
+
+        <!-- Drakor section -->
+        <div class="home-tab-panel" data-tab="drakor">
+        <a 
+          href="/drakor"
+          class="block w-full rounded-xl overflow-hidden border border-white/5 transition-all duration-300 group"
+        >
+          <div class="relative min-h-[140px] sm:min-h-[160px] flex items-center justify-between gap-6 px-6 sm:px-10 py-6 bg-linear-to-r from-cyan-950/60 via-blue-950/50 to-purple-950/40">
+            <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_30%_50%,rgba(34,211,238,0.15),transparent)]" />
+            <div class="relative flex-1 min-w-0">
+              <span class="text-cyan-400 text-xs font-bold uppercase tracking-wider">Drakor</span>
+              <h2 class="text-xl sm:text-2xl font-bold text-white mt-1 group-hover:text-cyan-200 transition-colors">
+                Jelajahi drakor Terbaru & Populer
+              </h2>
+              <p class="text-gray-400 text-sm mt-1">
+                Tonton drakor terbaru dan populer dengan kualitas tinggi.
+              </p>
+            </div>
+            <span class="relative shrink-0 inline-flex items-center gap-2 text-cyan-400 font-medium group-hover:gap-3 transition-all">
+              Ke Section Drakor
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </span>
+          </div>
+        </a>
+
+        {initialDrakorData && (
+          <>
+            <DramaOngoing animeList={initialDrakorData.ongoing?.animeList ?? []} />
+            <DramaTerbaru animeList={initialDrakorData.drama_terbaru?.animeList ?? []} />
+          </>
+        )}
+        </div>
       </main>
     </>
   )

@@ -1,0 +1,197 @@
+---
+type FilmCardItem = {
+  title: string;
+  poster: string;
+  aquaaquariaId: string;
+  href?: string;
+  score?: string;
+  type?: string;
+  episode?: string;
+  quality?: string;
+  releaseDate?: string;
+  duration?: string;
+  genreList?: FilmGenre[];
+};
+
+export interface Props {
+  item: FilmCardItem;
+  /** Accent color for border, badges, score, title hover */
+  variant?: "amber" | "indigo" | "rose" | "emerald" | "violet";
+  /** Show type + quality badges top-left */
+  showBadges?: boolean;
+  /** Where to show score: bottom-right, or inline at bottom with duration */
+  scorePosition?: "bottom-right" | "bottom-inline" | "none";
+  /** Show episode badge at top-right (e.g. Serial TV) */
+  showEpisodeBadge?: boolean;
+  /** Show duration in bottom bar (with scorePosition bottom-inline) */
+  showDuration?: boolean;
+  /** Hover overlay with quality + releaseDate (e.g. slider) */
+  overlay?: "none" | "hover";
+  /** Subtitle under title: episode (Ep X), genre line, or none */
+  subtitle?: "episode" | "genre" | "none";
+}
+
+const {
+  item,
+  variant = "violet",
+  showBadges = true,
+  scorePosition = "bottom-right",
+  showEpisodeBadge = false,
+  showDuration = false,
+  overlay = "none",
+  subtitle = "episode",
+} = Astro.props;
+
+const accent = {
+  amber: {
+    border: "group-hover:border-amber-500/40",
+    badge: "bg-amber-500/90 text-black",
+    badgeMuted: "bg-white/20 text-white",
+    score: "text-amber-400",
+    titleHover: "group-hover:text-amber-300",
+    overlay: "text-amber-300",
+  },
+  indigo: {
+    border: "group-hover:border-indigo-500/40",
+    badge: "bg-indigo-500/90 text-white",
+    badgeMuted: "bg-white/20 text-white",
+    score: "text-amber-400",
+    titleHover: "group-hover:text-indigo-300",
+    overlay: "text-indigo-300",
+  },
+  rose: {
+    border: "group-hover:border-rose-500/40",
+    badge: "bg-rose-500/90 text-white",
+    badgeMuted: "bg-white/20 text-white",
+    score: "text-rose-400",
+    titleHover: "group-hover:text-rose-300",
+    overlay: "text-rose-300",
+  },
+  emerald: {
+    border: "group-hover:border-emerald-500/40",
+    badge: "bg-emerald-500/90 text-white",
+    badgeMuted: "bg-white/20 text-white",
+    score: "text-emerald-400",
+    titleHover: "group-hover:text-emerald-300",
+    overlay: "text-emerald-300",
+  },
+  violet: {
+    border: "group-hover:border-violet-500/40",
+    badge: "bg-violet-500/90 text-white",
+    badgeMuted: "bg-white/20 text-white",
+    score: "text-violet-400",
+    titleHover: "group-hover:text-violet-300",
+    overlay: "text-violet-300",
+  },
+}[variant];
+
+const href = item.href || `/film/${item.aquaaquariaId}`;
+---
+
+<a href={href} class="flex-none w-[160px] sm:w-[180px] group cursor-pointer">
+  <div
+    class={`relative aspect-2/3 rounded-xl overflow-hidden mb-3 border border-white/5 transition-all duration-300 ${accent.border}`}
+  >
+    <img
+      src={item.poster}
+      alt={item.title}
+      class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+      loading="lazy"
+    />
+
+    {
+      showBadges && (item.type || item.quality) && (
+        <div class="absolute top-2 left-2 flex gap-1.5 flex-wrap">
+          {item.type && (
+            <span
+              class={`px-2 py-0.5 rounded text-[10px] font-medium ${accent.badge}`}
+            >
+              {item.type}
+            </span>
+          )}
+          {item.quality && (
+            <span class="px-2 py-0.5 rounded text-[10px] font-medium bg-white/20 text-white">
+              {item.quality}
+            </span>
+          )}
+        </div>
+      )
+    }
+
+    {
+      showEpisodeBadge && item.episode && (
+        <div class="absolute top-2 right-2 rounded bg-black/60 px-2 py-1 text-[10px] text-white">
+          Ep {item.episode}
+        </div>
+      )
+    }
+
+    {
+      scorePosition === "bottom-right" && item.score && (
+        <div
+          class={`absolute bottom-2 right-2 flex items-center gap-1 rounded bg-black/60 px-2 py-1 text-xs ${accent.score}`}
+        >
+          <span>★</span>
+          {item.score}
+        </div>
+      )
+    }
+
+    {
+      scorePosition === "bottom-inline" &&
+        (item.score || (showDuration && item.duration)) && (
+          <div class="absolute bottom-2 left-2 right-2 flex flex-wrap gap-1">
+            {item.score && (
+              <span class="rounded bg-black/60 px-2 py-0.5 text-[10px] text-amber-400">
+                ★ {item.score}
+              </span>
+            )}
+            {showDuration && item.duration && (
+              <span class="rounded bg-black/60 px-2 py-0.5 text-[10px] text-gray-300">
+                {item.duration}
+              </span>
+            )}
+          </div>
+        )
+    }
+
+    {
+      overlay === "hover" && (
+        <div class="absolute inset-0 bg-linear-to-t from-black/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+          {item.quality && (
+            <span class={`text-[10px] font-bold uppercase ${accent.overlay}`}>
+              {item.quality}
+            </span>
+          )}
+          {item.releaseDate && (
+            <p class="text-xs text-white/90">{item.releaseDate}</p>
+          )}
+        </div>
+      )
+    }
+  </div>
+
+  <h3
+    class={`font-semibold text-sm text-white line-clamp-2 transition-colors ${accent.titleHover}`}
+  >
+    {item.title}
+  </h3>
+
+  {
+    subtitle === "episode" && item.episode && (
+      <p class="text-xs text-gray-500">Ep {item.episode}</p>
+    )
+  }
+  {
+    subtitle === "genre" && (
+      <>
+        {item.episode && <p class="text-xs text-gray-500">Ep {item.episode}</p>}
+        {item.genreList?.length ? (
+          <p class="text-[10px] text-gray-500 line-clamp-1 mt-0.5">
+            {item.genreList.map((g: FilmGenre) => g.title).join(" · ")}
+          </p>
+        ) : null}
+      </>
+    )
+  }
+</a>

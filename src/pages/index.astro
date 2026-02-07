@@ -11,6 +11,7 @@ import { fetchHomeData, fetchSchedule } from "@/lib/FetchAnime";
 
 import { fetchMangaHomeData } from "@/lib/FetchManga";
 import { fetchFilmHomeData } from "@/lib/FetchFIlm";
+import { fetchDrakor } from "@/lib/FetchDrakor";
 
 const initialHomeData = await fetchHomeData();
 
@@ -18,6 +19,7 @@ const scheduleData = await fetchSchedule();
 
 const initialMangaHomeData = await fetchMangaHomeData();
 const initialFilmData = await fetchFilmHomeData();
+const initialDrakorData = await fetchDrakor();
 ---
 
 <html lang="id" class="streaming-app dark">
@@ -36,7 +38,7 @@ const initialFilmData = await fetchFilmHomeData();
   </head>
 
   <body
-    class="min-h-screen bg-[#0a0b14] text-white antialiased selection:bg-cyan-500/30 overflow-x-hidden"
+    class="min-h-screen antialiased selection:bg-cyan-500/30 overflow-x-hidden"
   >
     <Header />
     <HomePage
@@ -44,6 +46,7 @@ const initialFilmData = await fetchFilmHomeData();
       scheduleData={scheduleData}
       initialMangaHomeData={initialMangaHomeData}
       initialFilmData={initialFilmData}
+      initialDrakorData={initialDrakorData}
     />
     <Footer />
   </body>

@@ -1,0 +1,499 @@
+---
+import "@/styles/global.css";
+
+import Header from "@/components/layout/Header.astro";
+
+import Footer from "@/components/layout/Footer.astro";
+
+import { fetchDrakorDetail } from "@/lib/FetchDrakor";
+
+export const prerender = false;
+
+const { id } = Astro.params;
+const animeId = id ?? "";
+if (!animeId) return Astro.redirect("/");
+
+const data = await fetchDrakorDetail(animeId);
+const title = data?.title ?? "Drama";
+const description = data?.synopsis?.paragraphs?.[0]?.slice(0, 160) ?? title;
+const backdropImage = data?.banner?.[0] ?? data?.poster ?? "";
+const genreLabels = data?.genreList?.map((g) => g.title).join(" · ") ?? "";
+const networkLabel = data?.original_network?.[0]?.title ?? "";
+const statusLabel = data?.status?.[0]?.title ?? "";
+const airedYear = data?.aired?.[0]?.title ?? "";
+const firstEpisode = data?.episodeList?.[0];
+---
+
+<html lang="id" class="streaming-app dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} – Zona Nonton</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    {data?.poster && <meta property="og:image" content={data.poster} />}
+  </head>
+
+  <body class="min-h-screen bg-[#0a0b14] text-white antialiased flex flex-col">
+    <Header />
+
+    {
+      !data ? (
+        <main class="grow pt-32 pb-20 px-6 max-w-4xl mx-auto text-center">
+          <p class="text-gray-400 mb-2">Gagal memuat data drama.</p>
+          <p class="text-gray-500 text-sm mb-4">ID: {animeId}</p>
+          <p class="text-gray-500 text-sm mb-4 max-w-md mx-auto">
+            Pastikan <code class="bg-white/10 px-1 rounded">PUBLIC_API_ENVIRONMENT</code> dan <code class="bg-white/10 px-1 rounded">PUBLIC_API_SECRET</code> di .env benar. Cek konsol/terminal server untuk pesan [FetchDrakor].
+          </p>
+          <a href="/" class="inline-flex gap-2 text-cyan-400 hover:text-cyan-300">
+            ← Kembali ke beranda
+          </a>
+        </main>
+      ) : (
+        <>
+          <!-- Hero Section -->
+          <section class="relative h-[75vh] min-h-[420px] w-full overflow-hidden pt-20">
+            <div class="absolute inset-0">
+              <img
+                src={backdropImage}
+                alt=""
+                class="w-full h-full object-cover"
+              />
+              <div
+                class="absolute inset-0 hero-gradient"
+                style="background: linear-gradient(0deg, #0a0b14 0%, rgba(10,11,20,0.4) 50%, rgba(10,11,20,0.2) 100%), linear-gradient(90deg, #0a0b14 0%, rgba(10,11,20,0.3) 100%);"
+              />
+            </div>
+            <div class="relative h-full max-w-[1440px] mx-auto px-6 md:px-10 flex items-end pb-12 md:pb-16 gap-6 md:gap-10">
+              <div class="w-1/4 min-w-[120px] max-w-[200px] shrink-0 group">
+                <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10 aspect-2/3">
+                  <img
+                    src={data.poster}
+                    alt={data.title}
+                    class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  {data.status?.[0]?.statusId === "ongoing" && (
+                    <div class="absolute top-2 left-2">
+                      <span class="bg-cyan-500 text-black font-bold text-[10px] px-2 py-1 rounded uppercase">
+                        Ongoing
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div class="flex-1 min-w-0 pb-2 md:pb-4">
+                <div class="flex flex-wrap items-center gap-2 md:gap-3 mb-1 md:mb-2">
+                  {genreLabels && (
+                    <span class="text-cyan-400 font-bold tracking-widest text-xs uppercase">
+                      {genreLabels}
+                    </span>
+                  )}
+                  {networkLabel && (
+                    <>
+                      <span class="w-1 h-1 bg-white/20 rounded-full hidden sm:inline" />
+                      <span class="flex items-center gap-1 text-sm font-medium text-gray-400">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          class="shrink-0"
+                        >
+                          <rect x="2" y="7" width="20" height="15" rx="2" ry="2" />
+                          <polyline points="17 2 12 7 7 2" />
+                        </svg>
+                        {networkLabel}
+                      </span>
+                    </>
+                  )}
+                </div>
+                <h1 class="font-cabinet text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-1 tracking-tight line-clamp-2">
+                  {data.title}
+                </h1>
+                {data.japanese && (
+                  <h2 class="text-lg md:text-2xl text-white/60 mb-4 md:mb-6 font-medium">
+                    {data.japanese}
+                  </h2>
+                )}
+                <div class="flex flex-wrap items-center gap-4 md:gap-6 mb-6 md:mb-8">
+                  {data.score && data.score !== "N/A" && (
+                    <div class="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 w-fit">
+                      <span class="flex text-yellow-400 text-sm">
+                        ★★★★★
+                      </span>
+                      <span class="font-bold text-lg">{data.score}</span>
+                      <span class="text-xs text-gray-400">/ 10</span>
+                    </div>
+                  )}
+                  <div class="flex flex-wrap gap-3 md:gap-4 text-sm text-gray-300">
+                    {statusLabel && (
+                      <span class="flex items-center gap-1.5 font-medium bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full border border-purple-500/30">
+                        {statusLabel}
+                      </span>
+                    )}
+                    {airedYear && (
+                      <span class="flex items-center gap-1.5 font-medium">{airedYear}</span>
+                    )}
+                    <span class="flex items-center gap-1.5 font-medium">
+                      {data.episodes} Episode{data.episodes !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-3 md:gap-4">
+                  {firstEpisode && (
+                    <a
+                      href={`/drakor/${animeId}/${firstEpisode.title}`}
+                      class="flex items-center gap-3 bg-cyan-400 text-black px-6 md:px-10 py-3 md:py-4 rounded-xl font-bold text-base md:text-lg hover:bg-cyan-300 transition-all shadow-[0_0_20px_rgba(34,211,238,0.4)]"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" />
+                      </svg>
+                      TONTON SEKARANG
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    class="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 px-5 md:px-6 py-3 md:py-4 rounded-xl font-bold transition-all"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    TAMBAH KE DAFTAR
+                  </button>
+                  <button
+                    type="button"
+                    class="flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all"
+                    aria-label="Bagikan"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    >
+                      <circle cx="18" cy="5" r="3" />
+                      <circle cx="6" cy="12" r="3" />
+                      <circle cx="18" cy="19" r="3" />
+                      <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                      <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Main Content -->
+          <main class="max-w-[1440px] mx-auto px-6 md:px-10 py-8 md:py-12 w-full">
+            <!-- Tabs -->
+            <div
+              class="flex items-center gap-8 md:gap-12 border-b border-white/5 mb-8 md:mb-10"
+              role="tablist"
+            >
+              <button
+                type="button"
+                id="tab-details"
+                role="tab"
+                aria-selected="true"
+                class="pb-4 font-cabinet text-lg md:text-xl font-bold tracking-wide uppercase transition-all border-b-2 border-cyan-400 text-cyan-400"
+              >
+                Detail
+              </button>
+              <button
+                type="button"
+                id="tab-episodes"
+                role="tab"
+                aria-selected="false"
+                class="pb-4 font-cabinet text-lg md:text-xl font-bold tracking-wide text-gray-500 hover:text-white uppercase transition-all border-b-2 border-transparent"
+              >
+                Episode{" "}
+                <span class="ml-2 text-sm bg-white/5 px-2 py-0.5 rounded text-gray-400">
+                  {data.episodeList?.length ?? 0}
+                </span>
+              </button>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-10 lg:gap-16">
+              <!-- Left: Details / Episodes -->
+              <div class="w-full lg:w-3/4">
+                <div id="content-details" class="block">
+                  <!-- Synopsis -->
+                  {data.synopsis?.paragraphs?.length ? (
+                    <section class="mb-12 md:mb-16">
+                      <h3 class="font-cabinet text-xl md:text-2xl font-bold mb-4 md:mb-6">
+                        Sinopsis
+                      </h3>
+                      <div class="text-gray-400 text-base md:text-lg leading-relaxed max-w-4xl space-y-4">
+                        {data.synopsis.paragraphs.map((p) => (
+                          <p>{p}</p>
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
+
+            <!-- Similar Dramas -->
+            {data.recommendedAnimeList?.length ? (
+              <section class="mt-16 md:mt-24">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-6 md:mb-8">
+                  <h3 class="font-cabinet text-2xl md:text-3xl font-extrabold">
+                    Drama Serupa
+                  </h3>
+                </div>
+                <div
+                  class="flex gap-4 md:gap-6 overflow-x-auto pb-4 md:pb-6 custom-scrollbar scroll-smooth similar-row"
+                  style="scrollbar-gutter: stable;"
+                >
+                  {data.recommendedAnimeList.map((rec) => (
+                    <a
+                      href={`/drakor/${rec.animeId}`}
+                      class="w-44 sm:w-52 md:w-56 shrink-0 group cursor-pointer"
+                    >
+                      <div class="relative aspect-2/3 rounded-2xl overflow-hidden mb-3 border border-white/10">
+                        <img
+                          src={rec.poster}
+                          alt={rec.title}
+                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div class="absolute bottom-2 right-2">
+                          <span class="bg-black/80 backdrop-blur-md px-2 py-1 rounded text-xs font-bold">
+                            {rec.score}
+                          </span>
+                        </div>
+                      </div>
+                      <h4 class="font-bold truncate text-sm md:text-base">
+                        {rec.title}
+                      </h4>
+                      <p class="text-xs md:text-sm text-gray-500">
+                        {rec.episodes} eps · {rec.genreList?.[0]?.title ?? rec.rating}
+                      </p>
+                    </a>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+                </div>
+
+                <!-- Episodes (hidden by default) -->
+                <div id="content-episodes" class="hidden">
+                  <div class="flex flex-wrap items-center justify-between gap-4 mb-6 md:mb-8">
+                    <h3 class="font-cabinet text-xl md:text-2xl font-bold">
+                      Daftar Episode
+                    </h3>
+                  </div>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                    {data.episodeList?.map((ep) => (
+                      <a
+                        href={`/drakor/${animeId}/${ep.title}`}
+                        class="episode-card group cursor-pointer"
+                      >
+                        <div class="relative aspect-video rounded-xl overflow-hidden mb-2 md:mb-3 border border-white/5 bg-white/5">
+                          <img
+                            src={data.poster}
+                            alt={`Episode ${ep.title}`}
+                            class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                          />
+                          <div class="play-overlay absolute inset-0 bg-black/40 opacity-0 transition-opacity duration-300 flex items-center justify-center group-hover:opacity-100">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="32"
+                              height="32"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              class="text-white"
+                            >
+                              <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                          </div>
+                          <span class="absolute top-2 left-2 bg-black/60 backdrop-blur-md text-[10px] font-bold px-2 py-1 rounded">
+                            EP {String(ep.title).padStart(2, "0")}
+                          </span>
+                          <div class="absolute bottom-0 left-0 w-full h-1 bg-white/10">
+                            <div class="h-full bg-cyan-400 w-0" />
+                          </div>
+                        </div>
+                        <h4 class="font-bold text-sm mb-1 truncate group-hover:text-cyan-400 transition-colors">
+                          {ep.episodeTitle}
+                        </h4>
+                        <p class="text-[11px] text-gray-500 uppercase tracking-tighter">
+                          {data.duration}
+                        </p>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Sidebar -->
+              <aside class="w-full lg:w-1/4 shrink-0">
+                <div class="bg-white/5 border border-white/10 rounded-2xl p-6 md:p-8">
+                  <h3 class="font-cabinet text-lg md:text-xl font-bold mb-6 md:mb-8">
+                    Info Produksi
+                  </h3>
+                  <div class="space-y-5 md:space-y-6">
+                    {networkLabel && (
+                      <div>
+                        <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">
+                          Studio / Network
+                        </p>
+                        <p class="text-sm font-medium">{networkLabel}</p>
+                      </div>
+                    )}
+                    {data.producers && (
+                      <div>
+                        <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">
+                          Produser
+                        </p>
+                        <p class="text-sm font-medium">{data.producers}</p>
+                      </div>
+                    )}
+                    {data.aired?.length ? (
+                      <div>
+                        <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">
+                          Tahun Tayang
+                        </p>
+                        <p class="text-sm font-medium">
+                          {data.aired.map((a) => a.title).join(", ")}
+                        </p>
+                      </div>
+                    ) : null}
+                    {statusLabel && (
+                      <div>
+                        <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">
+                          Status
+                        </p>
+                        <span class="text-sm font-bold text-green-400">
+                          {statusLabel}
+                        </span>
+                      </div>
+                    )}
+                    {data.duration && (
+                      <div>
+                        <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">
+                          Durasi
+                        </p>
+                        <p class="text-sm font-medium">{data.duration}</p>
+                      </div>
+                    )}
+                    {data.releaseDays?.length ? (
+                      <div>
+                        <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">
+                          Hari Tayang
+                        </p>
+                        <p class="text-sm font-medium">
+                          {data.releaseDays.map((d) => d.title).join(", ")}
+                        </p>
+                      </div>
+                    ) : null}
+                    {data.genreList?.length ? (
+                      <div>
+                        <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">
+                          Genre
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                          {data.genreList.map((g) => (
+                            <span class="px-2 py-1 bg-white/5 rounded-md text-[10px] text-gray-400 border border-white/5">
+                              #{g.title.toLowerCase().replace(/\s+/g, "")}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div class="mt-8 md:mt-10 pt-8 md:pt-10 border-t border-white/10">
+                    <button
+                      type="button"
+                      class="w-full flex items-center justify-center gap-2 bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 py-3 rounded-xl border border-purple-500/20 transition-all font-bold text-sm"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                        <line x1="4" y1="22" x2="4" y2="15" />
+                      </svg>
+                      Laporkan Masalah
+                    </button>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </main>
+        </>
+      )
+    }
+
+    <Footer />
+
+    <style>
+      .episode-card:hover .play-overlay {
+        opacity: 1;
+      }
+    </style>
+    <script define:vars={{ hasData: !!data }}>
+      if (!hasData) return;
+      const tabDetails = document.getElementById("tab-details");
+      const tabEpisodes = document.getElementById("tab-episodes");
+      const contentDetails = document.getElementById("content-details");
+      const contentEpisodes = document.getElementById("content-episodes");
+      if (!tabDetails || !tabEpisodes || !contentDetails || !contentEpisodes) return;
+
+      tabDetails.addEventListener("click", () => {
+        tabDetails.classList.add("border-cyan-400", "text-cyan-400");
+        tabDetails.classList.remove("border-transparent");
+        tabDetails.setAttribute("aria-selected", "true");
+        tabEpisodes.classList.remove("border-cyan-400", "text-cyan-400");
+        tabEpisodes.classList.add("border-transparent", "text-gray-500");
+        tabEpisodes.setAttribute("aria-selected", "false");
+        contentDetails.classList.remove("hidden");
+        contentEpisodes.classList.add("hidden");
+      });
+
+      tabEpisodes.addEventListener("click", () => {
+        tabEpisodes.classList.add("border-cyan-400", "text-cyan-400");
+        tabEpisodes.classList.remove("border-transparent", "text-gray-500");
+        tabEpisodes.setAttribute("aria-selected", "true");
+        tabDetails.classList.remove("border-cyan-400", "text-cyan-400");
+        tabDetails.classList.add("border-transparent", "text-gray-500");
+        tabDetails.setAttribute("aria-selected", "false");
+        contentEpisodes.classList.remove("hidden");
+        contentDetails.classList.add("hidden");
+      });
+    </script>
+  </body>
+</html>

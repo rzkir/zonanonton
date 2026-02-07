@@ -96,11 +96,6 @@ export async function fetchFilmEpisodeDetail(
     }
 }
 
-/**
- * Fetch resolved stream URL from server API (same endpoint as fetchFilmServer).
- * When serverId is the encoded token, response is { ok, data: { url } }.
- * GET /aquaaquaria/server/:serverId
- */
 export async function fetchFilmServerStreamUrl(
     serverId: string,
     opts?: ApiEnv | string

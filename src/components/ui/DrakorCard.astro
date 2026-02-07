@@ -1,0 +1,94 @@
+---
+export interface Props {
+  item: DrakorAnimeItem;
+  /** Accent color: cyan (ongoing) or amber (terbaru) */
+  variant?: "cyan" | "amber";
+  /** Badge display: genre only (2 tags) or country + genre (1+1) */
+  badgeMode?: "genre" | "country-genre";
+}
+
+const { item, variant = "cyan", badgeMode = "genre" } = Astro.props;
+
+const accent = {
+  cyan: {
+    border: "group-hover:border-cyan-500/40",
+    badge: "bg-cyan-500/90 text-white",
+    score: "text-cyan-400",
+    titleHover: "group-hover:text-cyan-300",
+  },
+  amber: {
+    border: "group-hover:border-amber-500/40",
+    badge: "bg-amber-500/90 text-white",
+    badgeMuted: "bg-white/20 text-white",
+    score: "text-amber-400",
+    titleHover: "group-hover:text-amber-300",
+  },
+}[variant];
+
+const href = `/drakor/${item.animeId}`;
+---
+
+<a href={href} class="flex-none w-[160px] sm:w-[180px] group cursor-pointer">
+  <div
+    class={`relative aspect-2/3 rounded-xl overflow-hidden mb-3 border border-white/5 transition-all duration-300 ${accent.border}`}
+  >
+    <img
+      src={item.poster}
+      alt={item.title}
+      class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+      loading="lazy"
+    />
+    <div class="absolute top-2 left-2 flex gap-1.5 flex-wrap">
+      {
+        badgeMode === "genre" &&
+          item.genreList
+            ?.slice(0, 2)
+            .map((g) => (
+              <span
+                class={`px-2 py-0.5 rounded text-[10px] font-medium ${accent.badge}`}
+              >
+                {g.title}
+              </span>
+            ))
+      }
+      {
+        badgeMode === "country-genre" && (
+          <>
+            {item.countryList?.slice(0, 1).map((c) => (
+              <span
+                class={`px-2 py-0.5 rounded text-[10px] font-medium ${accent.badge}`}
+              >
+                {c.title}
+              </span>
+            ))}
+            {item.genreList?.slice(0, 1).map((g) => (
+              <span
+                class={`px-2 py-0.5 rounded text-[10px] font-medium ${variant === "amber" ? accent.badgeMuted : accent.badge}`}
+              >
+                {g.title}
+              </span>
+            ))}
+          </>
+        )
+      }
+    </div>
+    {
+      item.score && item.score !== "N/A" && (
+        <div
+          class={`absolute bottom-2 right-2 flex items-center gap-1 rounded bg-black/60 px-2 py-1 text-xs ${accent.score}`}
+        >
+          <span>★</span>
+          {item.score}
+        </div>
+      )
+    }
+  </div>
+  <h3
+    class={`font-semibold text-sm text-white line-clamp-2 transition-colors ${accent.titleHover}`}
+  >
+    {item.title}
+  </h3>
+  <p class="text-xs text-gray-500">
+    {item.episodes} eps · {item.latestReleaseDate}
+  </p>
+</a>
