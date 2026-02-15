@@ -63,8 +63,8 @@ const filmHeroesList: HeroData[] = (initialFilmData?.slider ?? []).slice(0, 8).m
 }));
 
 const mangaSourceList = [
-  ...(initialMangaHomeData?.recent?.komikuList ?? []),
-  ...(initialMangaHomeData?.komiku_popular?.mangaList ?? []),
+  ...(initialMangaHomeData?.recent ?? []),
+  ...(initialMangaHomeData?.komiku_popular ?? []),
 ];
 const mangaHeroesList: HeroData[] = mangaSourceList.slice(0, 8).map((item: KomikuListItem | MangaPopularItem) => ({
   title: item.title,
@@ -239,19 +239,19 @@ const drakorHeroesList: HeroData[] = drakorSourceList.slice(0, 8).map((item: Dra
         </a>
 
         <!-- Recent Manga (Recent Manga list) -->
-        <Recent komikuList={initialMangaHomeData?.recent?.komikuList ?? []} />
+        <Recent komikuList={initialMangaHomeData?.recent ?? []} />
 
         <!-- Popular Manga (Popular Manga list) -->
-        <MangaPopular mangaList={initialMangaHomeData?.komiku_popular?.mangaList ?? []} />
+        <MangaPopular mangaList={initialMangaHomeData?.komiku_popular ?? []} />
         
         <!-- Popular Manga (Popular Manga list) -->
-        <MangaPopular mangaList={initialMangaHomeData?.manga_popular?.mangaList ?? []} />
+        <MangaPopular mangaList={initialMangaHomeData?.manga_popular ?? []} />
 
         <!-- Popular Manhwa (Popular Manhwa list) -->
-        <ManhwaPopular mangaList={initialMangaHomeData?.manhwa_popular?.mangaList ?? []} />
+        <ManhwaPopular mangaList={initialMangaHomeData?.manhwa_popular ?? []} />
 
         <!-- Popular Manhua (Popular Manhua list) -->
-        <ManhuaPopular mangaList={initialMangaHomeData?.manhua_popular?.mangaList ?? []} />
+        <ManhuaPopular mangaList={initialMangaHomeData?.manhua_popular ?? []} />
         </div>
 
         <!-- Banner Film section -->
